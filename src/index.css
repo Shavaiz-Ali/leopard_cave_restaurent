@@ -1,0 +1,176 @@
+/* stylelint-disable */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --radius: 0.75rem;
+    --background: 42 25% 96%;
+    --foreground: 30 15% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 30 15% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 15% 15%;
+    --primary: 32 55% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 25 45% 55%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 42 20% 92%;
+    --muted-foreground: 30 10% 40%;
+    --accent: 42 30% 88%;
+    --accent-foreground: 30 15% 15%;
+    --destructive: 0 84.2% 60.2%;
+    --border: 42 20% 85%;
+    --input: 42 20% 85%;
+    --ring: 32 55% 45%;
+    --chart-1: 32 70% 50%;
+    --chart-2: 25 60% 55%;
+    --chart-3: 42 50% 60%;
+    --chart-4: 35 65% 50%;
+    --chart-5: 28 75% 55%;
+    --sidebar-background: 42 25% 96%;
+    --sidebar-foreground: 30 15% 20%;
+    --sidebar-primary: 32 55% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 42 30% 88%;
+    --sidebar-accent-foreground: 30 15% 15%;
+    --sidebar-border: 42 20% 85%;
+    --sidebar-ring: 32 55% 45%;
+    --destructive-foreground: 0 0% 100%;
+  }
+
+  .dark {
+    --background: 30 20% 8%;
+    --foreground: 42 20% 95%;
+    --card: 30 20% 10%;
+    --card-foreground: 42 20% 95%;
+    --popover: 30 20% 10%;
+    --popover-foreground: 42 20% 95%;
+    --primary: 32 60% 55%;
+    --primary-foreground: 30 20% 8%;
+    --secondary: 25 50% 50%;
+    --secondary-foreground: 42 20% 95%;
+    --muted: 30 20% 15%;
+    --muted-foreground: 42 15% 65%;
+    --accent: 30 25% 18%;
+    --accent-foreground: 42 20% 95%;
+    --destructive: 0 62.8% 30.6%;
+    --border: 30 20% 20%;
+    --input: 30 20% 20%;
+    --ring: 32 60% 55%;
+    --chart-1: 32 70% 60%;
+    --chart-2: 25 65% 55%;
+    --chart-3: 42 55% 65%;
+    --chart-4: 35 70% 55%;
+    --chart-5: 28 80% 60%;
+    --sidebar-background: 30 20% 8%;
+    --sidebar-foreground: 42 20% 95%;
+    --sidebar-primary: 32 60% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 30 25% 18%;
+    --sidebar-accent-foreground: 42 20% 95%;
+    --sidebar-border: 30 20% 20%;
+    --sidebar-ring: 32 60% 55%;
+    --destructive-foreground: 42 20% 95%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slide-down {
+    from {
+      opacity: 0;
+      transform: translateY(-50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes fade-out {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 1s ease-out;
+  }
+
+  .animate-fade-out {
+    animation: fade-out 1s ease-out forwards;
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 1s ease-out;
+  }
+
+  .animate-slide-down {
+    animation: slide-down 1.2s ease-out;
+  }
+
+  .animate-fade-in-delayed {
+    animation: fade-in 1s ease-out 0.3s both;
+  }
+
+  .animate-fade-in-delayed-2 {
+    animation: fade-in-up 1s ease-out 0.6s both;
+  }
+
+  .animate-fade-in-delayed-3 {
+    animation: fade-in 1s ease-out 0.9s both;
+  }
+
+  @keyframes fade-pulse {
+    0%, 100% {
+      opacity: 0.4;
+      transform: scale(0.95);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+  }
+
+  .animate-fade-pulse {
+    animation: fade-pulse 2s ease-in-out infinite;
+  }
+}
