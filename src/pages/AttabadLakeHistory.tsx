@@ -95,7 +95,7 @@ export default function AttabadLakeHistory() {
 
               <div className="pt-8 border-t">
                 <Button size="lg" asChild className="rounded-full font-bold">
-                  <Link to="/reservation">Reserve Your Table</Link>
+                  <Link to="/reservation" target="_blank" rel="noopener noreferrer">Reserve Your Table</Link>
                 </Button>
               </div>
             </CardContent>

@@ -244,7 +244,7 @@ export default function GiyalinBlog() {
                       Visit Leopard Cave Restaurant to experience traditional Hunza cuisine served in authentic Giyalin baskets. Immerse yourself in the rich cultural heritage of Hunza Valley while enjoying breathtaking views of Attabad Lake.
                     </p>
                     <Button asChild className="rounded-full font-bold">
-                      <Link to="/reservation">Reserve Your Table</Link>
+                      <Link to="/reservation" target="_blank" rel="noopener noreferrer">Reserve Your Table</Link>
                     </Button>
                   </div>
                 </div>

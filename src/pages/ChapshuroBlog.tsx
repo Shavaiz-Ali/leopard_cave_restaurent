@@ -191,7 +191,7 @@ export default function ChapshuroBlog() {
                       Experience the true taste of Hunza's most famous street food at Leopard Cave Restaurant. Our Chapshuro is prepared fresh daily using traditional recipes and the finest local ingredients.
                     </p>
                     <Button asChild className="rounded-full font-bold">
-                      <Link to="/reservation">Reserve Your Table</Link>
+                      <Link to="/reservation" target="_blank" rel="noopener noreferrer">Reserve Your Table</Link>
                     </Button>
                   </div>
                 </div>

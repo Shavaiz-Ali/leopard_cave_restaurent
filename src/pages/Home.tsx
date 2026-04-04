@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Mountain, Utensils, MapPin, Heart, Clock, Wifi, ParkingCircle, Users, ChefHat, Sparkles, Leaf, Star, Facebook, Instagram } from 'lucide-react';
+import { Mountain, Utensils, MapPin, Heart, Clock, Wifi, ParkingCircle, Users, ChefHat, Sparkles, Leaf, Star, Facebook, Instagram, Volume2, VolumeX } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import SEO from '@/components/common/SEO';
@@ -9,6 +9,7 @@ import SEO from '@/components/common/SEO';
 export default function Home() {
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const featuredVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [isMuted, setIsMuted] = useState(true);
 
   const handleVideoPlay = (index: number) => {
     videoRefs.current.forEach((video, i) => {
@@ -18,34 +19,81 @@ export default function Home() {
     });
   };
 
-  // Intersection Observer for featured video autoplay
+  const toggleMute = () => {
+    const featuredVideo = featuredVideoRef.current;
+    if (featuredVideo) {
+      featuredVideo.muted = !featuredVideo.muted;
+      setIsMuted(featuredVideo.muted);
+    }
+  };
+
+  // Intersection Observer for featured video autoplay with sound
   useEffect(() => {
     const featuredVideo = featuredVideoRef.current;
     if (!featuredVideo) return;
+
+    let hasInteracted = false;
+    let unmuteAttempted = false;
+
+    // Aggressive unmute function for mobile
+    const forceUnmute = () => {
+      if (featuredVideo && !unmuteAttempted) {
+        unmuteAttempted = true;
+        featuredVideo.muted = false;
+        setIsMuted(false);
+        console.log('Force unmuting video on mobile');
+      }
+    };
+
+    // Listen for ANY user interaction to enable sound
+    const handleInteraction = () => {
+      if (!hasInteracted) {
+        hasInteracted = true;
+        forceUnmute();
+      }
+    };
+
+    // Add multiple interaction listeners for mobile
+    window.addEventListener('scroll', handleInteraction, { passive: true });
+    window.addEventListener('touchstart', handleInteraction, { passive: true });
+    window.addEventListener('touchmove', handleInteraction, { passive: true });
+    document.addEventListener('click', handleInteraction);
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            // Video is in view, autoplay
-            featuredVideo.play().catch(() => {
-              // Autoplay might be blocked by browser
+            // Video is in view - try to play with sound
+            featuredVideo.muted = false;
+            setIsMuted(false);
+            featuredVideo.play().catch((error) => {
+              // If autoplay with sound fails, play muted and wait for interaction
+              console.log('Autoplay with sound blocked, playing muted:', error);
+              featuredVideo.muted = true;
+              setIsMuted(true);
+              featuredVideo.play().catch(() => {
+                console.log('Autoplay completely blocked');
+              });
             });
           } else {
-            // Video is out of view, pause
+            // Video is out of view, pause it
             if (!featuredVideo.paused) {
               featuredVideo.pause();
             }
           }
         });
       },
-      { threshold: 0.5 } // Trigger when 50% of video is visible
+      { threshold: 0.3 } // Trigger when 30% of video is visible
     );
 
     observer.observe(featuredVideo);
 
     return () => {
       observer.disconnect();
+      window.removeEventListener('scroll', handleInteraction);
+      window.removeEventListener('touchstart', handleInteraction);
+      window.removeEventListener('touchmove', handleInteraction);
+      document.removeEventListener('click', handleInteraction);
     };
   }, []);
 
@@ -259,11 +307,11 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    // Hide text after 5 seconds of being visible
+    // Hide text after 4 seconds of being visible
     if (showText) {
       const textTimer = setTimeout(() => {
         setShowText(false);
-      }, 5000);
+      }, 4000);
 
       return () => clearTimeout(textTimer);
     }
@@ -341,33 +389,30 @@ export default function Home() {
           />
         ))}
         <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/50 z-10" />
-        {showContent && (
-          <div className="relative z-20 w-full h-full flex flex-col items-center justify-center py-12 px-4">
-            {/* Center Text Section */}
-            <div className="flex-1 flex items-center justify-center">
-              {showText && (
-                <div className="text-center space-y-4 animate-fade-in">
-                  <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-amber-400 tracking-tight drop-shadow-2xl">
-                    Welcome to Leopard Cave Restaurant
-                  </h1>
-                  <p className="text-lg md:text-xl text-cyan-100 font-medium drop-shadow-xl max-w-3xl mx-auto">
-                    Enjoy delicious local and international cuisine with a breathtaking view of Attabad Lake
-                  </p>
-                </div>
-              )}
+        
+        {/* Center Text Section - Fades out after 4 seconds - Absolutely positioned for perfect centering */}
+        {showContent && showText && (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 w-full px-4">
+            <div className={`text-center space-y-3 md:space-y-4 max-w-4xl mx-auto transition-opacity duration-1000 ${showText ? 'opacity-100 animate-fade-in' : 'opacity-0'}`}>
+              <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-amber-400 tracking-tight drop-shadow-2xl leading-tight px-4">
+                Welcome to Leopard Cave Restaurant
+              </h1>
+              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-cyan-100 font-medium drop-shadow-xl max-w-3xl mx-auto leading-relaxed px-6">
+                Enjoy delicious local and international cuisine with a breathtaking view of Attabad Lake
+              </p>
             </div>
-
-            {/* Bottom Buttons Section - Only visible after text disappears */}
-            {!showText && (
-              <div className="flex flex-col sm:flex-row gap-4 items-center justify-center animate-fade-in mb-12">
-                <Button size="lg" asChild className="rounded-full text-base md:text-lg px-8 md:px-10 py-5 md:py-6 font-bold shadow-2xl hover:scale-105 hover:bg-white/10 hover:shadow-primary/50 hover:border-2 hover:border-white transition-all duration-300 bg-primary border-2 border-transparent backdrop-blur-sm">
-                  <Link to="/menu" className="hover:text-white">Menu</Link>
-                </Button>
-                <Button size="lg" asChild className="rounded-full text-base md:text-lg px-8 md:px-10 py-5 md:py-6 font-bold shadow-2xl hover:scale-105 hover:bg-white/10 hover:shadow-primary/50 hover:border-2 hover:border-white transition-all duration-300 bg-primary border-2 border-transparent backdrop-blur-sm">
-                  <Link to="/reservation" className="hover:text-white">Reserve Table</Link>
-                </Button>
-              </div>
-            )}
+          </div>
+        )}
+        
+        {/* Bottom Buttons Section - Always visible */}
+        {showContent && (
+          <div className="absolute bottom-6 md:bottom-8 left-0 right-0 z-20 flex flex-col sm:flex-row gap-4 items-center justify-center px-4 animate-fade-in">
+            <Button size="lg" asChild className="rounded-full text-base md:text-lg px-8 md:px-10 py-5 md:py-6 font-bold shadow-2xl hover:scale-105 hover:bg-white/10 hover:shadow-primary/50 hover:border-2 hover:border-white transition-all duration-300 bg-primary border-2 border-transparent backdrop-blur-sm">
+              <Link to="/menu" className="hover:text-white">Menu</Link>
+            </Button>
+            <Button size="lg" asChild className="rounded-full text-base md:text-lg px-8 md:px-10 py-5 md:py-6 font-bold shadow-2xl hover:scale-105 hover:bg-white/10 hover:shadow-primary/50 hover:border-2 hover:border-white transition-all duration-300 bg-primary border-2 border-transparent backdrop-blur-sm">
+              <Link to="/reservation" target="_blank" rel="noopener noreferrer" className="hover:text-white">Reserve Table</Link>
+            </Button>
           </div>
         )}
       </section>
@@ -411,6 +456,20 @@ export default function Home() {
                     <source src="https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260331/file-ami9gyitjabk.mp4" type="video/mp4" />
                     Your browser does not support the video tag.
                   </video>
+                  
+                  {/* Mute/Unmute Button Overlay */}
+                  <button
+                    onClick={toggleMute}
+                    className="absolute top-4 left-4 bg-black/70 backdrop-blur-sm p-3 rounded-full hover:bg-black/90 transition-all z-20 hover:scale-110"
+                    aria-label={isMuted ? "Unmute video" : "Mute video"}
+                  >
+                    {isMuted ? (
+                      <VolumeX className="h-6 w-6 text-white" />
+                    ) : (
+                      <Volume2 className="h-6 w-6 text-white" />
+                    )}
+                  </button>
+                  
                   {/* Watermark Overlay - Positioned to avoid controls */}
                   <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-lg pointer-events-none z-10">
                     <p className="text-white text-sm font-semibold">www.leopardcaverestaurant.com</p>
@@ -734,7 +793,7 @@ export default function Home() {
           </div>
           <div className="text-center mt-12">
             <Button size="lg" asChild className="rounded-full text-lg px-10 py-6 font-bold shadow-xl hover:scale-105 hover:bg-secondary hover:shadow-primary/50 transition-all duration-300">
-              <Link to="/reservation">Book Your Experience</Link>
+              <Link to="/reservation" target="_blank" rel="noopener noreferrer">Book Your Experience</Link>
             </Button>
           </div>
         </div>

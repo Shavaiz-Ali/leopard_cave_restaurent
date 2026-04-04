@@ -232,7 +232,7 @@ export default function HunzaDryFruitsBlog() {
                       Experience dishes made with the finest Hunza dry fruits at Leopard Cave Restaurant. Our menu features traditional and modern recipes that showcase these nutritious ingredients.
                     </p>
                     <Button asChild className="rounded-full font-bold">
-                      <Link to="/reservation">Reserve Your Table</Link>
+                      <Link to="/reservation" target="_blank" rel="noopener noreferrer">Reserve Your Table</Link>
                     </Button>
                   </div>
                 </div>

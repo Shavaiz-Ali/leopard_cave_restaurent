@@ -227,7 +227,7 @@ export default function BurushShapickBlog() {
                       Experience the authentic taste of traditional Hunza flatbread at Leopard Cave Restaurant. Our Burush Shapick is prepared fresh daily using time-honored methods and the finest local ingredients.
                     </p>
                     <Button asChild className="rounded-full font-bold">
-                      <Link to="/reservation">Reserve Your Table</Link>
+                      <Link to="/reservation" target="_blank" rel="noopener noreferrer">Reserve Your Table</Link>
                     </Button>
                   </div>
                 </div>

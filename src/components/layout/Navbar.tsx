@@ -32,7 +32,7 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
 
-  const isMenuActive = location.pathname === '/menu' || location.pathname === '/menu-cards' || location.pathname === '/menu-landing';
+  const isMenuActive = location.pathname === '/menu' || location.pathname === '/menu-cards' || location.pathname === '/menu-images';
 
   return (
     <nav className="fixed top-0 z-50 w-full border-b border-white/20 bg-black/50 backdrop-blur-lg supports-[backdrop-filter]:bg-black/50">
@@ -67,7 +67,7 @@ export function Navbar() {
           
           {/* Menu Link - No Dropdown */}
           <Link
-            to="/menu-landing"
+            to="/menu"
             className={cn(
               "text-xs xl:text-sm font-semibold transition-all duration-300 hover:text-primary hover:scale-105 drop-shadow-md px-2 xl:px-3 py-2 rounded-md whitespace-nowrap",
               isMenuActive
@@ -94,7 +94,7 @@ export function Navbar() {
           ))}
 
           <Button asChild size="sm" className="ml-2 xl:ml-4 rounded-full font-bold shadow-lg hover:scale-105 hover:bg-white hover:text-primary hover:shadow-white/50 transition-all duration-300 bg-primary text-primary-foreground whitespace-nowrap text-xs xl:text-sm px-4 xl:px-6">
-            <Link to="/reservation">Book Now</Link>
+            <Link to="/reservation" target="_blank" rel="noopener noreferrer">Book Now</Link>
           </Button>
         </div>
 
@@ -123,7 +123,7 @@ export function Navbar() {
               
               {/* Mobile Menu Link - No Dropdown */}
               <Link
-                to="/menu-landing"
+                to="/menu"
                 onClick={() => setIsOpen(false)}
                 className={cn(
                   "text-lg font-semibold transition-colors hover:text-primary px-4 py-2 rounded-md",
@@ -148,7 +148,7 @@ export function Navbar() {
               ))}
 
               <Button asChild size="lg" className="mt-4 rounded-full font-bold hover:scale-105 hover:bg-secondary hover:shadow-primary/50 transition-all duration-300" onClick={() => setIsOpen(false)}>
-                <Link to="/reservation">Book Now</Link>
+                <Link to="/reservation" target="_blank" rel="noopener noreferrer">Book Now</Link>
               </Button>
             </div>
           </SheetContent>

@@ -296,7 +296,7 @@ export default function HunzaFoodGuideBlog() {
                     
                     <div className="flex flex-col sm:flex-row gap-4">
                       <Button asChild className="rounded-full font-bold">
-                        <Link to="/reservation">Reserve Your Table</Link>
+                        <Link to="/reservation" target="_blank" rel="noopener noreferrer">Reserve Your Table</Link>
                       </Button>
                       <Button asChild variant="outline" className="rounded-full font-bold">
                         <Link to="/menu-cards">View Full Menu</Link>

@@ -1,11 +1,25 @@
 import BackButton from "@/components/common/BackButton";
 import SEO from "@/components/common/SEO";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tent, Building2, Calendar } from 'lucide-react';
+import { Tent, Building2, Calendar, Users, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 export default function LeopardCaveResort() {
+  const [showCampingNotice, setShowCampingNotice] = useState(false);
+
+  const handleCampingBooking = () => {
+    toast.info('Camping Services Temporarily Unavailable', {
+      description: 'Currently, camping services are not available due to maintenance. Please contact us on WhatsApp for more information.',
+      duration: 6000,
+      action: {
+        label: 'Contact on WhatsApp',
+        onClick: () => window.open('https://wa.me/923160605535', '_blank')
+      },
+    });
+  };
   return (
     <div className="flex flex-col w-full min-h-screen py-16 bg-background">
       <div className="container px-4 md:px-8 max-w-7xl mx-auto space-y-16 mt-8">
@@ -44,6 +58,27 @@ export default function LeopardCaveResort() {
                 <CardTitle className="text-2xl font-bold text-primary">Camping Packages</CardTitle>
               </CardHeader>
               <CardContent className="px-6 pb-6 space-y-4">
+                {/* Pricing Information */}
+                <div className="bg-primary/10 rounded-xl p-4 space-y-2 border-2 border-primary/20">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-5 w-5 text-primary" />
+                      <span className="font-bold text-foreground">Price per Tent:</span>
+                    </div>
+                    <span className="text-2xl font-extrabold text-primary">PKR 3,000</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-primary" />
+                      <span className="text-muted-foreground">Maximum Capacity:</span>
+                    </div>
+                    <span className="font-bold text-foreground">3 People per Tent</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground text-center pt-2 border-t border-primary/20">
+                    Per night rate
+                  </div>
+                </div>
+
                 <ul className="space-y-2 text-muted-foreground">
                   <li className="flex items-start gap-2">
                     <span className="text-primary font-bold">✓</span>
@@ -66,11 +101,12 @@ export default function LeopardCaveResort() {
                     <span>Restaurant dining access</span>
                   </li>
                 </ul>
-                <Button asChild className="w-full rounded-full font-bold text-lg py-6">
-                  <Link to="/campaign-reservation">
-                    <Calendar className="h-5 w-5 mr-2" />
-                    Book Camping Now
-                  </Link>
+                <Button 
+                  onClick={handleCampingBooking}
+                  className="w-full rounded-full font-bold text-lg py-6"
+                >
+                  <Calendar className="h-5 w-5 mr-2" />
+                  Book Camping Now
                 </Button>
               </CardContent>
             </Card>

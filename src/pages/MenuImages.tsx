@@ -44,7 +44,7 @@ export default function MenuImages() {
                 </div>
                 <div className="p-6 flex justify-center">
                   <Button size="lg" asChild className="rounded-full text-lg px-10 py-6 font-bold shadow-xl hover:scale-105 hover:bg-secondary hover:shadow-primary/50 transition-all duration-300">
-                    <Link to="/reservation">Reserve Now</Link>
+                    <Link to="/reservation" target="_blank" rel="noopener noreferrer">Reserve Now</Link>
                   </Button>
                 </div>
               </CardContent>
@@ -59,7 +59,7 @@ export default function MenuImages() {
             Reserve your table now and experience the unique flavors and breathtaking views at Leopard Cave Restaurant
           </p>
           <Button size="lg" asChild className="rounded-full text-lg px-12 py-7 font-bold shadow-xl hover:scale-105 hover:bg-secondary hover:shadow-primary/50 transition-all duration-300">
-            <Link to="/reservation">Book Your Table</Link>
+            <Link to="/reservation" target="_blank" rel="noopener noreferrer">Book Your Table</Link>
           </Button>
         </div>
 

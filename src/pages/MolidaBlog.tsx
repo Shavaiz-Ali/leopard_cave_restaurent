@@ -123,7 +123,7 @@ export default function MolidaBlog() {
                       Experience the authentic taste of traditional Hunza cuisine at Leopard Cave Restaurant. Our Molida is prepared fresh daily using time-honored methods and the finest local ingredients.
                     </p>
                     <Button asChild className="rounded-full font-bold">
-                      <Link to="/reservation">Reserve Your Table</Link>
+                      <Link to="/reservation" target="_blank" rel="noopener noreferrer">Reserve Your Table</Link>
                     </Button>
                   </div>
                 </div>

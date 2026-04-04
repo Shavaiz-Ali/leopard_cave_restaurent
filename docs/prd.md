@@ -2,7 +2,7 @@
 
 ## 1. Application Overview
 - **Application Name:** Leopard Cave Restaurant
-- **Description:** A multi-page website for Leopard Cave Restaurant, showcasing its unique cave-style dining experience with panoramic views of Attabad Lake. The site enables visitors to explore the menu (as uploaded images and as interactive square cards with full item details), view the gallery, watch video reels, make table reservations via WhatsApp or Gmail with a premium dynamic billing system, read blog articles (including dedicated food blogs for traditional Hunza dishes with user-uploaded images and a Reserve Now button on each food blog), explore social media channels, and discover the Resort offerings including campaign reservations. Video download functionality is permanently disabled across the entire site. Every page always loads from the top regardless of previous scroll position. The website includes a branded loading screen, a promotional popup ad, full SEO optimization for targeted keywords, and a custom favicon. The official Leopard Cave Restaurant logo is consistently displayed in the navigation bar header, as the browser tab favicon, and alongside the website title across all pages. A globally fixed back button is present on every page, always visible regardless of scroll position.
+- **Description:** A multi-page website for Leopard Cave Restaurant, showcasing its unique cave-style dining experience with panoramic views of Attabad Lake. The site enables visitors to explore the menu (via a dedicated Menu landing page with two options: interactive square cards with full item details, and uploaded image cards), view the gallery, watch video reels, make table reservations via WhatsApp or Gmail with a premium dynamic billing system, read blog articles (including dedicated food blogs for traditional Hunza dishes with user-uploaded images and a Reserve Now button on each food blog), explore social media channels, and discover the Resort offerings including campaign reservations. Video download functionality is permanently disabled across the entire site. Every page always loads from the top regardless of previous scroll position. The website includes a branded loading screen, a promotional popup ad, full SEO optimization for targeted keywords, and a custom favicon. The official Leopard Cave Restaurant logo is consistently displayed in the navigation bar header, as the browser tab favicon, and alongside the website title across all pages. A globally fixed back button is present on every page, always visible regardless of scroll position.
 
 ---
 
@@ -10,14 +10,16 @@
 - **Target Users:** Tourists, families, couples, and food enthusiasts visiting or planning to visit the Attabad Lake region.
 - **Core Use Cases:**
   - Visitors browse the restaurant's ambiance, story, and highlights
-  - Visitors explore the menu via uploaded images or interactive square card layout with item names, descriptions, and prices
+  - Visitors navigate to the Menu landing page and choose between Menu Cards or Menu Images
+  - Visitors explore the menu via interactive square card layout with item names, descriptions, and prices, or via uploaded image cards
+  - Visitors search for food items by name on the Menu Landing Page and Menu Cards sub-page
   - Visitors browse gallery images and video reels (no download option)
   - Visitors reserve a table online with a premium dynamic billing experience and send reservation details via WhatsApp or Gmail
   - Visitors find the restaurant's location, nearby attractions, and social media channels
   - Visitors read blog articles about the history, culture, and traditional foods of the Hunza region
-  - Visitors read dedicated food blogs for Burush Shapik, Chapshurou, Mulida, Giyalin, and other traditional Hunza dishes, each with a Reserve Now button
+  - Visitors read dedicated food blogs for Burush Shapik, Chapshurou, Mulida, Giyalin, Dawdo Soup, Hari Soup, Diram Phitti, and other traditional Hunza dishes, each with a Reserve Now button
   - Visitors explore social media accounts (Facebook, Instagram, TikTok)
-  - Visitors book campaigns at the Resort section; Resort sub-section is marked as Coming Soon
+  - Visitors view camp/resort details and contact via WhatsApp for inquiries (booking temporarily disabled)
   - Visitors navigate back to the previous page at any time using the always-visible fixed back button
 
 ---
@@ -28,13 +30,17 @@
 ```
 Leopard Cave Restaurant Website
 ├── Home Page
-├── Menu Page
-│   ├── Menu Cards Sub-page (Option 1 — square boxes, default)
+├── Menu Page (Landing Page)
+│   ├── Menu Cards Sub-page (Option 1 — square boxes)
 │   └── Menu Images Sub-page (Option 2 — uploaded image cards)
 ├── Gallery Page
 │   ├── Images Tab/Sub-page
 │   └── Reels/Videos Tab/Sub-page
 ├── Reservation Page
+│   ├── Restaurant Tab (default)
+│   └── Resort Tab
+│       ├── Camping Booking Sub-section
+│       └── Leopard Resort — Coming Soon Sub-section
 ├── Nearby Places Page
 ├── Location Page
 ├── About Us Page
@@ -51,7 +57,7 @@ Leopard Cave Restaurant Website
 │   │   └── Blog: Diram Phitti
 │   └── Social Media Sub-section
 └── Resort Page
-    ├── Campaigns Sub-section (with Reservation System)
+    ├── Campaigns Sub-section (with Camp Details + Maintenance Popup)
     └── Resort Sub-section (Coming Soon)
 ```
 
@@ -140,7 +146,7 @@ Leopard Cave Restaurant Website
 - **Mobile-specific requirement:** The Intersection Observer implementation must be confirmed working on iOS Safari and Android Chrome, configured with threshold: 0 and rootMargin: '0px'.
 - **Single-video playback rule remains enforced:** Auto-pause on scroll is additive to the existing single-video playback rule.
 
-### 3.7 Global: Back Button (NEW)
+### 3.7 Global: Back Button
 
 #### 3.7.1 Behavior & Placement
 - A back button (← arrow) is present on every page of the website.
@@ -180,13 +186,51 @@ Leopard Cave Restaurant Website
 - The navigation bar is rendered with a transparent background, overlaid directly on top of the slideshow images.
 - This transparent overlay applies to all slideshow images except the first logo image (Rustic cave dining with stunning views.png), which retains its original black sidebar background.
 - All navigation bar links/buttons include a hover effect: on hover or click, the link or button color changes to match the restaurant's warm earth-tone or cave-inspired color palette.
-- **Menu Dropdown Behavior:** When the user hovers over or clicks the Menu button in the navigation bar, a dropdown appears with two options: Option 1: Menu Cards; Option 2: Menu Images.
-- The dropdown is styled consistently with the site's dark theme and includes hover effects on each option.
+- **Menu Navigation Behavior (Updated):** When the user clicks the Menu button in the navigation bar, they are navigated to the Menu Landing Page (see Section 3.9). The Menu button does NOT open a dropdown and does NOT directly redirect to any sub-page. The Menu Landing Page itself provides the two options (Menu Cards and Menu Images) via prominent buttons.
+- **Menu Button Fix:** The Menu button in the navigation bar must be fully functional on both mobile and desktop. Any broken link, incorrect routing, or JavaScript click issue must be resolved. Clicking Menu must reliably open the Menu Landing Page (/menu) every time, with no unresponsive or broken behavior.
 
 #### Hero Section (Slideshow)
 - Heading (H1, SEO-optimized): Best Restaurant in Hunza at Attabad Lake — Leopard Cave Restaurant
 - Subheading (H2): Enjoy a unique dining experience with breathtaking views of Attabad Lake.
 - Marketing tagline displayed prominently: Dine with a View of Attabad Lake
+
+**Hero Section — Title & Description Fade-Out Behavior (Updated):**
+- The title (H1), subheading (H2), and tagline are displayed immediately when the Home Page loads.
+- After 5 seconds, the title, subheading, and tagline fade out and disappear.
+- The fade-out animation applies only to the title, subheading, and tagline — it does NOT affect the Menu button, Reserve Table button, or any other interactive element.
+- The fade-out is implemented as a smooth CSS opacity transition (e.g., 0.8–1 second fade duration).
+- Once faded out, the title/subheading/tagline remain hidden for the duration of the session on the Home Page.
+
+**Hero Section — Mobile Centering (Updated):**
+- On mobile screens, the title (H1), subheading (H2), and tagline must be centered both horizontally and vertically within the hero section viewport.
+- True full centering is required: the text block must be positioned at the visual center of the hero area in all directions — horizontally centered and vertically centered (including from the bottom).
+- Implementation: Use CSS flexbox or absolute positioning with transform: translate(-50%, -50%) or equivalent to achieve true center alignment on mobile. The hero section container on mobile must have a defined height (e.g., 100vh or the full visible hero area height) to allow vertical centering to function correctly.
+- Text alignment on mobile: centered (text-align: center).
+- This centering applies only on mobile screen sizes (e.g., max-width: 768px breakpoint or equivalent). Desktop layout remains unchanged.
+- **Additional fix:** The text block must be positioned at the exact visual center of the background slideshow image — not offset toward the top, bottom, or sides. On mobile, the hero container must use display: flex with justify-content: center and align-items: center, or equivalent absolute centering, so the title and description appear balanced and aligned with the center of the image at all times.
+
+**Hero Section Buttons — Immediate & Permanent Visibility (Updated):**
+- The Menu button and Reserve Table button are displayed immediately when the Home Page loads.
+- Both buttons are visible at the same time as the title, description, and tagline — there is no delay, animation delay, or timed appearance for the buttons.
+- The buttons do NOT fade out. They remain permanently visible at all times, including after the title/description/tagline have faded out after 5 seconds.
+- The buttons do NOT depend on the title or description disappearing before they appear.
+- Both buttons are positioned clearly below the title and description/tagline, properly spaced, and styled as real, clearly visible, clickable buttons.
+- On mobile, the buttons remain centered horizontally and are positioned below the centered text block. After the title/description fade out, the buttons remain visible and accessible.
+- This behavior applies on both mobile and desktop.
+- **Menu** button links to the Menu Landing Page.
+- **Reserve Table** button links to the Reservation Page.
+- Both buttons include a hover effect consistent with the restaurant's cave and nature theme.
+
+**Mobile Typography for Hero Text (Updated):**
+- The title (H1) and description/subheading text in the hero section must be specifically optimized for mobile screens.
+- **Title font size on mobile:** Reduced to a smaller but still prominent size (e.g., clamp-based or responsive sizing such as 1.6rem–2rem on small screens), ensuring it does not appear oversized or cause awkward line wrapping.
+- **Description/subheading font size on mobile:** Reduced to a balanced, readable size (e.g., 0.9rem–1.1rem on small screens) with improved line spacing (line-height: 1.5–1.7) for readability.
+- **Text alignment on mobile:** Centered in all directions (see Mobile Centering above).
+- **Font style:** Clean and modern font, maintaining proper typographic hierarchy (Title > Subheading > Tagline).
+- **Line spacing and padding:** Sufficient spacing between title, subheading, and tagline so text does not feel cramped on small screens.
+- **No awkward wrapping:** All text must wrap gracefully on small screens without orphaned single words or broken phrases.
+- **Desktop:** Desktop typography remains mostly unchanged; only minor consistency adjustments applied if needed.
+
 - The hero section displays a sliding banner/slideshow cycling through the following restaurant images in this order:
   - Image 1 (opening slide, selected randomly at page load from Image 1 and Image 2) — file name: Rustic cave dining with stunning views.png, URL: https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260329/file-akxqj3o5lnnk.png
   - Image 2 (follows immediately after Image 1) — file name: Rustic hillside restaurant at sunset.png, URL: https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260329/file-akxqj3o5mj9c.png
@@ -199,11 +243,6 @@ Leopard Cave Restaurant Website
   - Image 1 (Rustic cave dining with stunning views.png): retain the original black sidebars as-is.
   - All other images (Images 2–6): fill any side letterbox or empty areas with deep charcoal, dark espresso brown, or near-black tones (e.g., #1a1008, #1c1c1c, or #0d0d0d).
 - **Slideshow order rule:** At page load, either Image 1 or Image 2 is randomly selected as the opening slide. Image 2 always follows Image 1. After the two opening images, the slideshow continues in fixed order: Image 3, Image 4, Image 5, Image 6. The slideshow loops continuously.
-- The top text (heading, subheading, tagline) is shown initially and then fades out.
-- After the top text fades out, two CTA buttons appear at the bottom center:
-  - **Menu** button (links to Menu Page)
-  - **Reserve Table** button (links to Reservation Page)
-- Both buttons include a hover effect consistent with the restaurant's cave and nature theme.
 
 #### Introduction Section
 - H2 heading (SEO-optimized): Local Hunza Food & Cave Dining at Attabad Lake
@@ -229,10 +268,11 @@ Leopard Cave Restaurant Website
   - File name: WhatsApp Video 2026-03-30 at 10.55.19 P.mp4, URL: https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260331/file-ami98mm4ey2o.mp4
   - Rendered as an inline video player with standard controls (play, pause, volume, fullscreen) — no download button or download option is present
   - **Fullscreen fix:** The fullscreen button must function correctly on both desktop and mobile. On desktop, clicking fullscreen must trigger the browser's native fullscreen API (document.requestFullscreen or vendor-prefixed equivalents). Tested across Chrome, Firefox, Edge, and Safari on desktop.
-  - Video does not autoplay; user initiates playback manually
+  - **Auto-play with auto-unmute on scroll into view (Updated):** When the featured video scrolls into the visible viewport, it automatically begins playing AND is automatically unmuted (sound ON). The video must not remain muted when it enters the viewport. If the browser enforces autoplay restrictions that block unmuted autoplay, the video attempts to play unmuted after the first user interaction on the page (click, scroll, or tap) as a fallback. The video does not require the user to manually press play or manually unmute.
+  - **Auto-pause / auto-mute on scroll out of view (Updated):** When the featured video is playing and the user scrolls it out of the visible viewport, it automatically pauses AND is muted. This ensures audio does not continue playing when the video is off-screen.
+  - **Implementation detail:** Use the Intersection Observer API (threshold: 0, rootMargin: '0px'). When the video enters the viewport (intersecting), call videoElement.muted = false and videoElement.play(). When the video exits the viewport (not intersecting), call videoElement.pause() and videoElement.muted = true. This must be confirmed working on iOS Safari and Android Chrome as well as desktop browsers.
   - **Watermark/caption text:** www.leopardcaverestaurant.com is displayed as a visible watermark overlay on the featured video player during playback, positioned in the top-left or top-right corner, or sufficiently above the bottom control bar without overlapping any video controls.
   - **Single-video playback rule:** When this featured video is playing and the user starts any other video, this video automatically pauses/stops.
-  - **Auto-pause on scroll:** When this video is playing and the user scrolls it out of the visible viewport, it automatically pauses (see Section 3.6).
 - **Remaining Reels (below featured video):**
   - Position 1: WhatsApp Video 2026-04-01 at 7.41.50 PM.mp4 (file-ao0pk0xvdbsw.mp4), URL: https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260401/file-ao0pk0xvdbsw.mp4
   - Position 2: WhatsApp Video 2026-03-30 at 10.55.19 PM.mp4 (file-ami9atjcwyrk.mp4), URL: https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260331/file-ami9atjcwyrk.mp4
@@ -316,25 +356,64 @@ Leopard Cave Restaurant Website
   - TikTok: https://www.tiktok.com/@leopard.cave.restaurant?_r=1&_t=ZS-954evnj7xI8
 - Each icon opens in a new tab
 
-### 3.9 Menu Page (Two Sub-pages)
-The Menu navigation entry features a dropdown on hover or click with two options:
-- **Option 1: Menu Cards** (square boxes — default view)
-- **Option 2: Menu Images** (uploaded image cards)
+### 3.9 Menu Page (Landing Page + Two Sub-pages)
 
-**Toggle Button Behavior:**
-- Two toggle buttons at the top of the Menu page: View Menu Cards and View Menu Images
-- Both share the same base color in default (inactive) state
-- Active button changes to a distinct active/selected state color
-- Both buttons have visible borders, adequate padding, and hover effects consistent with the site-wide theme
-- Toggle behavior works correctly on desktop and mobile
+#### 3.9.0 Menu Landing Page (Updated)
+- **URL:** /menu
+- **Purpose:** This is the first page the user sees when clicking the Menu button in the navigation bar or the Menu CTA button on the Home Page. It does NOT directly open Menu Cards or Menu Images.
+- **H1 heading (SEO-optimized):** Our Menu — Best Hunza Food & Local Dishes at Leopard Cave Restaurant
+- **Cover Image:** Displayed prominently at the top of the landing page.
+  - file name: WhatsApp Image 2026-03-30 at 10.31.08 PM.jpeg, URL: https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260331/file-amj39vjuheyo.jpeg — alt: 「Hunza food menu at Leopard Cave Restaurant」
+- **Search Functionality (New):**
+  - A search input box is displayed prominently at the top of the Menu Landing Page, below the cover image and above the two option buttons.
+  - Users can type any food item name into the search box.
+  - As the user types, matching food items from the full 40-item menu list are displayed instantly in real time (live filtering).
+  - Only items whose names match the search query (case-insensitive, partial match supported) are shown in the results.
+  - Each result displays the item name and price.
+  - If no items match the search query, a message is displayed: No items found. Try a different search.
+  - Clearing the search input hides the results and returns the page to its default state.
+  - The search box is styled consistently with the site's dark cave-inspired theme and is fully responsive on both mobile and desktop.
+- **Two prominent buttons displayed below the search box:**
+  - **View Menu Cards** — navigates to the Menu Cards Sub-page (/menu/cards)
+  - **View Menu Images** — navigates to the Menu Images Sub-page (/menu/images)
+- Both buttons are styled consistently with the site's dark cave-inspired theme, include hover effects, and are fully responsive on both mobile and desktop.
+- **User Flow:**
+  1. User clicks Menu in the navigation bar or the Menu CTA button on the Home Page
+  2. User is taken to the Menu Landing Page (/menu)
+  3. User sees the cover image, search box, and two buttons
+  4. User may search for a food item directly, or click View Menu Cards or View Menu Images to proceed to the respective sub-page
+- This flow applies on both mobile and desktop. There is no direct redirection to any sub-page from the navigation bar.
 
 #### 3.9.1 Menu Cards Sub-page (Option 1 — Square Boxes)
+- **URL:** /menu/cards
 - **H1 heading (SEO-optimized):** Our Menu — Local Hunza Food & Traditional Dishes
 - **Intro text (SEO-optimized):** Explore our full menu featuring the best Hunza food, traditional local dishes, Pakistani cuisine, and international favorites. From Hunza traditional food like Burush Shapik and Chapshurou to mountain beverages — every dish is crafted with local ingredients.
+- **Search Functionality (New):**
+  - A search input box is displayed at the top of the Menu Cards sub-page, above all category sections.
+  - Users can type any food item name into the search box.
+  - As the user types, matching menu item cards are displayed instantly in real time (live filtering). Only cards whose item names match the search query (case-insensitive, partial match supported) are shown.
+  - Non-matching cards are hidden while the search query is active.
+  - If no items match the search query, a message is displayed: No items found. Try a different search.
+  - Clearing the search input restores all category sections and cards to their default visible state.
+  - The search box is styled consistently with the site's dark cave-inspired theme and is fully responsive on both mobile and desktop.
 - All menu items organized by category in square box cards in a responsive grid layout
 - Each card includes: Item Name, Price, Short description, and a **Reserve a Table** button
-  - Clicking Reserve a Table navigates to the Reservation Page with that specific menu item pre-selected in the Pre-Order Food Items field
-  - **Pre-selection mechanism:** The menu item name is passed as a URL query parameter (e.g., ?item=Chicken+Corn+Soup) when navigating to the Reservation Page. The Reservation Page reads this parameter on load and automatically selects the matching item in the Pre-Order Food Items multi-select dropdown, setting its quantity to 1. This behavior must work correctly on both mobile and desktop.
+- **Reserve a Table Button Behavior (Updated — Multi-Item Cart with Confirmation Popup):**
+  - Clicking the Reserve a Table button on any menu card does NOT immediately redirect to the Reservation Page.
+  - Instead, a confirmation popup (modal) is displayed with the following behavior:
+    - **Popup Message:** Do you want to proceed to reservation or add more items?
+    - **Popup Buttons:**
+      1. **Add More Items** — closes the popup and keeps the user on the Menu Cards page; the selected item is added to a persistent cart/selection state
+      2. **Go to Reservation** — navigates to the Reservation Page and passes all currently selected items
+      3. **Cancel / Close** — closes the popup; the user remains on the same page; no item is added
+    - The popup uses a clean, modern design with smooth fade or slide animation, clear CTA-style buttons, and is fully responsive on both mobile and desktop.
+  - **Multi-item selection (cart behavior):**
+    - Users can select multiple items from the Menu Cards page before proceeding to reservation.
+    - Selected items are stored in component state or localStorage so they persist while the user browses the menu.
+    - A visible indicator (e.g., a cart badge or selected items count) is shown on the page so the user knows how many items are currently selected.
+    - When the user clicks Go to Reservation, all selected items are passed to the Reservation Page and automatically pre-filled in the Pre-Order Food Items multi-select dropdown, each with a default quantity of 1.
+  - **URL parameter compatibility:** The existing single-item pre-selection via URL query parameter (e.g., ?item=Chicken+Corn+Soup) remains supported for direct links from other pages. When arriving via URL parameter, the item is pre-selected in the dropdown as before.
+  - **Pre-selection mechanism:** All selected items are passed as URL query parameters or via state when navigating to the Reservation Page. The Reservation Page reads these on load and pre-selects all matching items in the Pre-Order Food Items multi-select dropdown. Matching is case-insensitive and trims whitespace. This behavior must work correctly on both mobile and desktop.
 
 **Menu Items by Category:**
 
@@ -401,6 +480,7 @@ The Menu navigation entry features a dropdown on hover or click with two options
 40. Grilled Beef Steak — PKR 3,000 — Tender yak meat, marinated in fresh onion juice and a blend of local herbs, flame-grilled for a rich, smoky flavor. Served with creamy mashed potatoes and finished with a traditional gakowmarcho sauce.
 
 #### 3.9.2 Menu Images Sub-page (Option 2 — Image Cards)
+- **URL:** /menu/images
 - **H1 heading (SEO-optimized):** Our Menu — Hunza Food & Local Dishes
 - Displays uploaded menu images as full cards — no cropping
 - A **Reserve Now** button at the bottom of each image card navigates to the Reservation Page
@@ -436,16 +516,68 @@ The Menu navigation entry features a dropdown on hover or click with two options
 - **Auto-pause on scroll:** Each video automatically pauses when scrolled out of the visible viewport (see Section 3.6); must work on both mobile and desktop
 - Sub-page designed to accommodate additional videos in the future
 
-### 3.11 Reservation Page (Premium Redesign)
+### 3.11 Reservation Page (Premium Redesign — Two Tabs)
+
+#### 3.11.0 Tab Structure (Updated)
+- The Reservation Page is divided into two top-level tabs displayed as prominent buttons at the top of the page:
+  - **Restaurant** (Tab 1 — default)
+  - **Resort** (Tab 2)
+- **Default behavior:** When the Reservation Page is opened (from any link or navigation), the Restaurant tab is automatically active and its content is displayed. The Resort tab button is visible but its content is not shown until the user clicks it.
+- **Tab switching:** Clicking the Resort tab button activates the Resort tab and displays its content. Clicking the Restaurant tab button returns to the Restaurant content. Switching between tabs is smooth (e.g., fade or instant swap with no page reload).
+- Both tab buttons are always visible at the top of the Reservation Page regardless of which tab is active.
+- The active tab button is visually distinguished (e.g., highlighted, underlined, or filled) from the inactive tab button, consistent with the site's dark cave-inspired theme.
+- Fully responsive on both mobile and desktop.
+
+#### 3.11.1 Restaurant Tab (Default)
 - **Overall Design:** Card-based layout with clean spacing, soft shadows, rounded corners, modern fonts
 - **H1 heading (SEO-optimized):** Reserve Your Table — Best Restaurant in Hunza at Attabad Lake
 - **Intro Text:** Book your table at Leopard Cave Restaurant and enjoy a memorable lunch or dinner with a breathtaking view of Attabad Lake. One of the best places to eat in Hunza Valley.
-- **URL Parameter Handling:** On page load, the Reservation Page reads the URL query parameter `item`. If a valid item name matching an entry in the predefined menu item list is found, that item is automatically pre-selected in the Pre-Order Food Items multi-select dropdown with a default quantity of 1. This pre-selection must work correctly on both mobile and desktop.
+- **URL Parameter Handling (Updated):** On page load, the Reservation Page reads the URL query parameter(s) for item(s). If one or more valid item names matching entries in the predefined menu item list are found, those items are automatically pre-selected in the Pre-Order Food Items multi-select dropdown, each with a default quantity of 1. This pre-selection must work correctly on both mobile and desktop. Item name matching is case-insensitive and trims whitespace for robustness.
 - **Advance Payment Policy Notice:** Displayed prominently above the form in a highlighted box with an info/warning icon. Text: If you reserve a table or place a food order in advance, you will be required to pay 40% of the total bill as an advance payment.
 - **Section 1 — Guest Details:** Full Name (required), Phone Number (required)
 - **Section 2 — Reservation Details:** Date (date picker, required), Time (time picker, required), Number of Guests (number input, required)
-- **Section 3 — Pre-Order Food Items (Required):** Controlled multi-select dropdown with search; predefined menu item list only; availability indicator per item; quantity +/- controls; at least one item required before submission
-- **Section 4 — Dynamic Billing Table:** Updates in real time; columns: Item Name | Quantity | Unit Price | Total; Subtotal and Total summary lines; items with no confirmed price show a note and are excluded from numeric total; styled as a clean invoice/receipt; **Print / Preview Bill** button below the table
+- **Section 3 — Pre-Order Food Items (Required):** Controlled multi-select dropdown with search; the predefined menu item list must include ALL 40 menu items listed in Section 3.9.1 across all categories; availability indicator per item; quantity +/- controls; at least one item required before submission. The complete predefined list is:
+  1. BURUSH SHAPICK
+  2. CHAP SHUROO
+  3. CHICKEN DEROO
+  4. DAWDO SOUP
+  5. HARI SOUP
+  6. SHIRIJOON SOUP
+  7. HOT & SOUR
+  8. Hari Ka Biranze Salad
+  9. Fresh Garden Salad
+  10. Mountain Yak Karahi
+  11. Pasture Mutton
+  12. Free Range Chicken
+  13. CHICKEN CORN SOUP
+  14. BALLING KHAM
+  15. CHAP ZA LAKSHA
+  16. Chamuse
+  17. Peak Fruit Fizz
+  18. Season's Essence
+  19. Lemon Peak Spark
+  20. Soft Drinks
+  21. Small Water
+  22. Large Water
+  23. Cappuccino
+  24. Americano
+  25. Espresso
+  26. Latte
+  27. Rose Petal Tea
+  28. Mountain Tea
+  29. Honey Tea
+  30. Matka Chai
+  31. Dhood Patti Chai
+  32. HIGHLAND YAK BURGER
+  33. ZINGER CRUNCH BURGER
+  34. CRISPY CLUCK
+  35. WALNUT DIP
+  36. HOMELAND POTATO FRIES
+  37. HOMELAND POTATO CHILI FRIES
+  38. Mountain Yak Chili Dry
+  39. Sweet & Sour Chicken
+  40. Grilled Beef Steak
+- **Section 4 — Dynamic Billing Table:** Updates in real time; columns: Item Name | Quantity | Unit Price | Total; Subtotal and Total summary lines; items with no confirmed price (CHAP ZA LAKSHA, WALNUT DIP) show a note and are excluded from numeric total; styled as a clean invoice/receipt; **Print / Preview Bill** button below the table
 - **Section 5 — Special Request:** One textarea field, optional
 - **Section 6 — Payment Method:** Three selectable options:
   - JazzCash: Account Number: 03160605535; QR Code: file name: WhatsApp Image 2026-03-31 at 11.53.52 PM.jpeg, URL: https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260401/file-ancjy90b0q9s.jpeg
@@ -454,6 +586,34 @@ The Menu navigation entry features a dropdown on hover or click with two options
   - Payment confirmation instruction: After completing the payment, please send a screenshot of the transaction to our WhatsApp number or email address for confirmation.
 - **Section 7 — Submission Channel:** Send via WhatsApp (03160605535) or Send via Gmail (Leopardcaverestaurantofficial@gmail.com); user must select one
 - **Submit button:** Confirm Reservation — disabled if any required field is empty, no food item selected, no payment method selected, or no submission channel selected; on submission opens WhatsApp or mailto pre-filled with structured reservation message; confirmation message displayed; reservation data stored in backend database
+
+#### 3.11.2 Resort Tab
+- **Activation:** The Resort tab content is displayed only when the user clicks the Resort tab button. It is not shown by default.
+- The Resort tab contains two clearly distinct sub-sections displayed vertically in order:
+
+**Sub-section A — Camping Booking**
+- Heading: Camping at Leopard Cave
+- Displays camp booking details prominently:
+  - 1 Tent = Maximum 3 people
+  - Price per tent per night = PKR 3,000
+- **Reserve Now Button — Maintenance Popup Behavior:**
+  - Clicking the Reserve Now button does NOT open any reservation form.
+  - Instead, a bottom notification popup slides up from the bottom of the screen:
+    - **Popup Message:** Currently, camping services are not available due to maintenance.
+    - **WhatsApp Button inside popup:** Labeled Contact Us on WhatsApp — clicking this button opens WhatsApp chat to 03160605535.
+    - **Close Button:** A clearly visible close (X) button or tap-outside-to-dismiss behavior is provided.
+    - **Auto-dismiss:** The popup may auto-dismiss after 8–10 seconds OR remain until the user manually closes it.
+    - **Animation:** The popup slides up from the bottom of the screen (mobile-friendly slide-up animation using CSS transform translateY).
+    - **Design:** Clean, modern design consistent with the site's dark cave-inspired theme; not an error screen or harsh alert.
+    - **Responsive:** Works correctly on both mobile and desktop.
+  - No reservation form is rendered or accessible while the maintenance popup behavior is active.
+
+**Sub-section B — Leopard Resort (Coming Soon)**
+- Heading: Leopard Resort
+- **Status:** Coming Soon
+- Prominent Coming Soon notice displayed as a visually styled banner or card
+- Content: Construction has not yet started. The resort is currently in planning. Check back soon for updates.
+- No booking or reservation functionality present
 
 ### 3.12 Nearby Places Page
 - **H1 heading (SEO-optimized):** Explore Nearby Attractions — Best Places in Hunza Near Attabad Lake
@@ -485,19 +645,19 @@ The About Us page includes four experience sub-sections below the Our Story sect
 
 - **Unforgettable Moments**
   - Description: Every visit to Leopard Cave Restaurant is a memory to cherish — from the breathtaking views to the warmth of our hospitality.
-  - Background image (guest experiences, dining moments): file name: WhatsApp Image 2026-03-27 at 10.29.28 PM.jpeg, URL: https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alt9l5yl27ls.jpeg — alt: 「Unforgettable dining moments at Leopard Cave Restaurant Hunza」
+  - Background image: file name: WhatsApp Image 2026-03-27 at 10.29.28 PM.jpeg, URL: https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alt9l5yl27ls.jpeg — alt: 「Unforgettable dining moments at Leopard Cave Restaurant Hunza」
 
 - **Natural Beauty**
   - Description: Surrounded by the majestic mountains and the turquoise waters of Attabad Lake, our restaurant is set in one of the most breathtaking natural landscapes in Pakistan.
-  - Background image (nature views, mountains, landscape): file name: Rustic hillside restaurant at sunset.png, URL: https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260329/file-akxqj3o5mj9c.png — alt: 「Natural beauty at Attabad Lake Hunza Valley Leopard Cave Restaurant」
+  - Background image: file name: Rustic hillside restaurant at sunset.png, URL: https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260329/file-akxqj3o5mj9c.png — alt: 「Natural beauty at Attabad Lake Hunza Valley Leopard Cave Restaurant」
 
 - **Cultural Heritage**
   - Description: We celebrate the rich traditions and cultural heritage of the Hunza Valley through our food, our space, and our stories.
-  - Background image (local culture, traditions): file name: WhatsApp Image 2026-03-27 at 10.27.58 PM (1).jpeg, URL: https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260329/file-akxcbezm1x4w.jpeg — alt: 「Cultural heritage of Hunza Valley at Leopard Cave Restaurant」
+  - Background image: file name: WhatsApp Image 2026-03-27 at 10.27.58 PM (1).jpeg, URL: https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260329/file-akxcbezm1x4w.jpeg — alt: 「Cultural heritage of Hunza Valley at Leopard Cave Restaurant」
 
 - **Exceptional Service**
   - Description: From the moment you arrive to the moment you leave, our team is dedicated to providing you with the finest service and a truly memorable experience.
-  - Background image (staff, food serving, hospitality): file name: WhatsApp Image 2026-03-27 at 10.29.29 PM.jpeg, URL: https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alt9l5yl2ww0.jpeg — alt: 「Exceptional service and hospitality at best restaurant in Hunza」
+  - Background image: file name: WhatsApp Image 2026-03-27 at 10.29.29 PM.jpeg, URL: https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alt9l5yl2ww0.jpeg — alt: 「Exceptional service and hospitality at best restaurant in Hunza」
 
 #### 3.14.3 Join Us at The Cave Section
 - Standard call-to-action invitation text
@@ -611,22 +771,31 @@ The About Us page includes four experience sub-sections below the Our Story sect
 - **Navigation:** Accessible from the navigation bar as 「Resort」, positioned after Blogs in the nav order.
 - Two clearly distinct sub-sections accessible via tabs or toggles: Campaigns and Resort
 
-#### 3.16.1 Campaigns Sub-section
+#### 3.16.1 Campaigns Sub-section (Updated)
 - **Heading:** Campaigns
 - **Intro Text:** Explore our available campaigns and book your spot for an unforgettable experience at Leopard Cave — one of the best places in Hunza.
 - Default campaign card:
   - Title: Leopard Cave Campaign
   - Description: Join us for an exclusive campaign experience at Leopard Cave Restaurant, surrounded by the breathtaking scenery of Attabad Lake and Baskochi Meadows. Limited spots available — book now to secure your place.
-  - Reserve Now button opens the Campaign Reservation Form
+  - Reserve Now button — see behavior below
 
-**Campaign Reservation System:**
-- Form fields: Full Name (required), Phone Number (required), Email Address (optional), Campaign Name (pre-filled, read-only), Preferred Date (required), Preferred Time (required), Number of Participants (required), Special Request / Notes (optional)
-- Payment Method: same three options as Reservation Page (JazzCash, Easypaisa, Crypto USDT–TRC20) with same QR codes and payment confirmation instruction
-- Submission Channel: Send via WhatsApp (03160605535) or Send via Gmail (Leopardcaverestaurantofficial@gmail.com)
-- Submit button: Confirm Campaign Reservation — disabled if required fields empty, no payment method, or no submission channel selected
-- On WhatsApp submission: opens WhatsApp chat to 03160605535 pre-filled with structured message
-- On Gmail submission: opens mailto to Leopardcaverestaurantofficial@gmail.com with same structured format
-- Confirmation message displayed after submission; campaign reservation data stored in backend database
+**Camp Booking Details (Displayed in Campaigns Sub-section):**
+- The following camp/tent pricing and capacity rules are displayed clearly within the Campaigns sub-section and within the campaign card:
+  - 1 Tent = Maximum 3 people
+  - Price per tent per night = PKR 3,000
+- This information is shown prominently in the campaign card description and/or in a dedicated info block within the section, so visitors can see the pricing and capacity before attempting to book.
+
+**Reserve Now Button — Maintenance Popup Behavior (Updated):**
+- Clicking the Reserve Now button on any campaign card does NOT open the Campaign Reservation Form and does NOT proceed to any actual reservation flow.
+- Instead, a bottom notification popup slides up from the bottom of the screen with the following behavior:
+  - **Popup Message:** Currently, camping services are not available due to maintenance.
+  - **WhatsApp Button inside popup:** Labeled Contact Us on WhatsApp — clicking this button opens WhatsApp chat to 03160605535.
+  - **Close Button:** A clearly visible close (X) button or tap-outside-to-dismiss behavior is provided.
+  - **Auto-dismiss:** The popup may auto-dismiss after a reasonable timeout (e.g., 8–10 seconds) OR remain until the user manually closes it — either approach is acceptable.
+  - **Animation:** The popup slides up from the bottom of the screen (mobile-friendly slide-up animation using CSS transform translateY).
+  - **Design:** Clean, modern design consistent with the site's dark cave-inspired theme; not an error screen or harsh alert.
+  - **Responsive:** Works correctly on both mobile and desktop.
+- The Campaign Reservation Form is not rendered or accessible while the maintenance popup behavior is active.
 
 #### 3.16.2 Resort Sub-section
 - **Heading:** Resort
@@ -642,25 +811,36 @@ The About Us page includes four experience sub-sections below the Our Story sect
 - **Scroll-to-top on page load (global):** Every page always loads from the very top on every fresh open or navigation event.
 - **Video download permanently disabled (global):** Download button and download option completely removed from all video players across the entire site.
 - **Auto-pause on scroll rule (global):** All video players use the Intersection Observer API. When a playing video is scrolled out of view, it is automatically paused. Applies on both mobile (iOS Safari, Android Chrome) and desktop. Observer configured with threshold: 0 and rootMargin: '0px'. Additive to the single-video playback rule.
-- **Global back button rule (NEW):** A fixed/sticky back button (← arrow) is present on every page of the website. It is always visible regardless of scroll position, positioned at the top-left corner of the screen. It navigates to the previous page in browser history (window.history.back()). On the Home Page with no prior history, the button is hidden or disabled gracefully. The button is touch-friendly, accessible on all screen sizes, and rendered with sufficient z-index to remain above all other page elements. It is consistent with the restaurant's dark cave-inspired theme and includes a hover effect.
-- **View More Videos page back button rule (NEW):** The Gallery Reels/Videos sub-page (reached via the View More button on the Home Page) displays a fixed/sticky back button (← arrow) that navigates back to the Home Page. Always visible on scroll, on both mobile and desktop.
-- **About Us experience sub-sections background image rule (NEW):** The four experience sub-sections on the About Us page (Unforgettable Moments, Natural Beauty, Cultural Heritage, Exceptional Service) use only real uploaded website images as background images. AI-generated images are strictly prohibited. Each image is applied with object-fit: cover, no distortion or awkward cropping, fully responsive on both mobile and desktop, and overlaid with a semi-transparent dark gradient for text readability. Assigned images: Unforgettable Moments — file-alt9l5yl27ls.jpeg; Natural Beauty — file-akxqj3o5mj9c.png; Cultural Heritage — file-akxcbezm1x4w.jpeg; Exceptional Service — file-alt9l5yl2ww0.jpeg.
-- **Menu item pre-selection rule:** When a user clicks the Reserve a Table button on any menu card, the item name is appended to the Reservation Page URL as a query parameter. On load, the Reservation Page reads this parameter and automatically pre-selects the matching item with quantity 1.
-- **Loading screen rule:** The branded loading screen with the Leopard Cave Restaurant logo and continuous fade-in/fade-out animation is displayed until the website fully loads. It then fades out smoothly. Works on both mobile and desktop.
+- **Featured video auto-play with auto-unmute on scroll into view rule (Updated):** When the featured video on the Home Page scrolls into the visible viewport, it automatically begins playing AND is automatically unmuted (sound ON). The video must not remain muted when entering the viewport. If browser autoplay restrictions block unmuted autoplay, the video plays unmuted after the first user interaction on the page (click, scroll, or tap) as a fallback. Implementation uses Intersection Observer API: on intersection enter, set videoElement.muted = false and call videoElement.play(); on intersection exit, call videoElement.pause() and set videoElement.muted = true.
+- **Featured video auto-pause and auto-mute on scroll out of view rule (Updated):** When the featured video is playing and the user scrolls it out of the visible viewport, it automatically pauses AND is muted. Audio must not continue when the video is off-screen.
+- **Global back button rule:** A fixed/sticky back button (← arrow) is present on every page of the website. It is always visible regardless of scroll position, positioned at the top-left corner of the screen. It navigates to the previous page in browser history (window.history.back()). On the Home Page with no prior history, the button is hidden or disabled gracefully. The button is touch-friendly, accessible on all screen sizes, and rendered with sufficient z-index to remain above all other page elements. It is consistent with the restaurant's dark cave-inspired theme and includes a hover effect.
+- **View More Videos page back button rule:** The Gallery Reels/Videos sub-page (reached via the View More button on the Home Page) displays a fixed/sticky back button (← arrow) that navigates back to the Home Page. Always visible on scroll, on both mobile and desktop.
+- **About Us experience sub-sections background image rule:** The four experience sub-sections on the About Us page use only real uploaded website images as background images. AI-generated images are strictly prohibited. Each image is applied with object-fit: cover, no distortion or awkward cropping, fully responsive on both mobile and desktop, and overlaid with a semi-transparent dark gradient for text readability.
+- **Menu navigation rule (Updated):** Clicking the Menu button in the navigation bar navigates to the Menu Landing Page (/menu). The Menu button must be fully functional on both mobile and desktop. There is no dropdown from the navigation bar. The Menu Landing Page displays a cover image, a search box, and two buttons: View Menu Cards and View Menu Images. This flow applies on both mobile and desktop.
+- **Menu Landing Page search rule (New):** A search input box is present at the top of the Menu Landing Page. As the user types, matching items from the full 40-item menu list are shown in real time (case-insensitive, partial match). Non-matching items are hidden. If no items match, a no results message is displayed. Clearing the input restores the default page state.
+- **Menu Cards sub-page search rule (New):** A search input box is present at the top of the Menu Cards sub-page. As the user types, matching menu item cards are shown in real time (case-insensitive, partial match). Non-matching cards are hidden. If no items match, a no results message is displayed. Clearing the input restores all cards.
+- **Hero section title/description fade-out rule:** The title (H1), subheading (H2), and tagline in the hero section fade out after 5 seconds using a smooth CSS opacity transition. The fade-out applies only to the title, subheading, and tagline. It does NOT affect the Menu button, Reserve Table button, or any other interactive element on the page.
+- **Hero section mobile centering rule (Updated):** On mobile screens, the title, subheading, and tagline are centered both horizontally and vertically within the hero section viewport — true full centering in all directions including from the bottom. The hero container on mobile uses display: flex with justify-content: center and align-items: center, or equivalent absolute centering with transform. The text block is positioned at the exact visual center of the background slideshow image. The hero container on mobile has a defined height (e.g., 100vh) to enable vertical centering. Text alignment is centered. This applies only on mobile (max-width: 768px or equivalent); desktop layout is unchanged.
+- **Hero section buttons permanent visibility rule (Updated):** The Menu button and Reserve Table button on the Home Page hero section are visible immediately when the page loads and remain permanently visible at all times — including after the title/description/tagline have faded out. The buttons are never affected by the fade-out animation. They are clearly visible, properly spaced, and styled as real clickable buttons on both mobile and desktop.
+- **Hero section mobile typography rule (Updated):** The title and description text in the hero section are specifically optimized for mobile screens. Title font size is reduced to a smaller but still prominent responsive size (e.g., clamp-based, approximately 1.6rem–2rem on small screens). Description font size is reduced to a balanced, readable size (e.g., 0.9rem–1.1rem) with line-height of 1.5–1.7. Text alignment is centered on mobile. A clean, modern font is used with proper typographic hierarchy. Sufficient spacing between text elements prevents cramped appearance. All text wraps gracefully. Desktop typography remains mostly unchanged.
+- **Reservation Page tab structure rule:** The Reservation Page contains two top-level tabs: Restaurant (default, opens automatically) and Resort. Both tab buttons are always visible at the top of the page. The Restaurant tab content is shown by default on page open. The Resort tab content is shown only when the user clicks the Resort tab button. Switching between tabs is smooth with no page reload. The active tab is visually distinguished.
+- **Reservation Resort tab content rule:** The Resort tab within the Reservation Page contains two sub-sections displayed vertically: (A) Camping Booking — showing camp pricing and capacity details with a Reserve Now button that triggers the maintenance slide-up popup; (B) Leopard Resort Coming Soon — displaying a Coming Soon notice with no booking functionality.
+- **Menu item confirmation popup rule:** Clicking the Reserve a Table button on any menu card on the Menu Cards sub-page does NOT immediately redirect to the Reservation Page. A confirmation popup (modal) is displayed with the message: Do you want to proceed to reservation or add more items? The popup contains three buttons: Add More Items, Go to Reservation, Cancel / Close.
+- **Multi-item cart rule:** Users can select multiple items from the Menu Cards page before proceeding to reservation. Selected items are stored in component state or localStorage. A visible cart indicator is shown. When the user proceeds to reservation, all selected items are passed and pre-filled in the Pre-Order Food Items dropdown.
+- **Menu item pre-selection rule (Updated):** All selected items are passed as URL query parameters or via state. The Reservation Page reads these on load and pre-selects all matching items. Single-item pre-selection via URL query parameter remains supported. Matching is case-insensitive and trims whitespace.
+- **Pre-Order Food Items complete list rule:** The Pre-Order Food Items dropdown on the Reservation Page must include all 40 menu items listed in Section 3.9.1.
+- **Loading screen rule:** The branded loading screen with the Leopard Cave Restaurant logo and continuous fade-in/fade-out animation is displayed until the website fully loads. It then fades out smoothly.
 - **Favicon rule:** The browser tab icon displays the Leopard Cave Restaurant official logo. The default favicon is removed. Multiple favicon formats provided for cross-browser compatibility.
-- **SEO rule (updated):** All pages include unique, keyword-rich title tags and meta descriptions. Global homepage meta title: Leopard Cave Restaurant | Best Restaurant in Hunza & Attabad Lake. Global homepage meta description: Discover Leopard Cave Restaurant – one of the best restaurants in Hunza near Attabad Lake. Enjoy local Hunza food, Pakistani & international dishes with a beautiful natural view. Headings use proper H1/H2/H3 hierarchy. All images include descriptive alt text. Clean, keyword-friendly URL structure applied. Hashtags included in blog article footers and social media integration sections.
+- **SEO rule (updated):** All pages include unique, keyword-rich title tags and meta descriptions. Global homepage meta title: Leopard Cave Restaurant | Best Restaurant in Hunza & Attabad Lake. Headings use proper H1/H2/H3 hierarchy. All images include descriptive alt text. Clean, keyword-friendly URL structure applied. Hashtags included in blog article footers and social media integration sections.
 - **Promotional popup rule:** Appears on Home Page only, 10 seconds after page loads. Auto-dismisses after 15–20 seconds. Visible close (X) button. Links to https://futurenaire.netlify.app/ in a new tab. Fully responsive.
 - **Navigation bar naming rule:** Links in order: Home, Menu, Gallery, Reservation, Nearby Places, Location, About Us, Blogs, Resort, Book Now.
 - **Slideshow auto-slide speed rule:** Transitions every 1 second with smooth crossfade (approximately 300–500ms). Runs continuously on both mobile and desktop.
 - **Slideshow sidebar color rule:** Image 1 retains original black sidebars. All other images fill letterbox areas with #1a1008, #1c1c1c, or #0d0d0d.
 - **Navigation bar and logo transparency rule:** Transparent overlay on top of slideshow at all times.
-- **Menu dropdown rule:** Dropdown on hover or click with Menu Cards and Menu Images options.
-- **Menu page toggle button rule:** Both buttons share same base color in default state; active button changes color; both have visible borders, padding, and hover effects.
-- **Hero section text and CTA rule:** Top text fades out first; Menu and Reserve Table buttons appear at bottom center only after top text has fully faded out.
 - **Slideshow order rule:** Random opening slide (Image 1 or Image 2); Image 2 always follows Image 1; fixed order thereafter: Image 3, 4, 5, 6; loops continuously.
 - **Slideshow-only image rule:** file-akxu72ukunsw.jpeg used exclusively in the hero slideshow; must NOT appear in the Home Page Gallery section or Gallery Images sub-page.
 - **Homepage layout order:** Hero Slideshow → Introduction → Experience Highlights → Featured Video → Reels (max 4) → View More button → Gallery Images → Premium Facilities → Customer Reviews → Visit Us Today / Location.
-- **Homepage top-4 reels update rule:** (1) file-ao0pk0xvdbsw.mp4, (2) file-ami9atjcwyrk.mp4, (3) file-ami9b9bltekg.mp4, (4) file-ami9c4w3ma68.mp4. file-ami9gyitjabk.mp4 removed from homepage top-4 but remains on Reels/Videos sub-page.
+- **Homepage top-4 reels update rule:** (1) file-ao0pk0xvdbsw.mp4, (2) file-ami9atjcwyrk.mp4, (3) file-ami9b9bltekg.mp4, (4) file-ami9c4w3ma68.mp4.
 - **Gallery Reels/Videos sub-page video list rule:** All eight videos present.
 - **Featured video watermark rule:** www.leopardcaverestaurant.com displayed as visible overlay during playback, positioned without overlapping video controls.
 - **Fullscreen fix rule (global):** Fullscreen button invokes browser's native fullscreen API on desktop; works on all browsers and mobile.
@@ -687,8 +867,9 @@ The About Us page includes four experience sub-sections below the Our Story sect
 - **Blog image display rule:** All user-uploaded blog cover/featured images must be displayed with proper fitting, fully responsive on both mobile and desktop.
 - **Blog hashtag rule:** Each blog article page includes a hashtag section at the bottom: #HunzaFood #AttabadLake #HunzaValley #BestRestaurantHunza #GilgitBaltistan #TravelHunza #HunzaCuisine.
 - **Food blog Reserve Now button rule:** Every dedicated food blog article page (Burush Shapik, Chapshurou, Mulida, Giyalin, Dawdo Soup, Hari Soup, Diram Phitti) includes a prominent Reserve Now button linking to the Reservation Page. The history blog and Culture of Hunza Valley blog do not include a Reserve Now button.
-- **Resort page rule:** Two sub-sections — Campaigns (fully functional reservation system) and Resort (Coming Soon, no booking functionality).
-- **Campaign reservation system rule:** Collects all required fields; sent via WhatsApp or Gmail in structured format; stored in backend database.
+- **Camp booking details display rule:** The Campaigns sub-section clearly displays: 1 Tent = Maximum 3 people; Price per tent per night = PKR 3,000.
+- **Campaign Reserve Now maintenance popup rule:** Clicking the Reserve Now button on any campaign card triggers a bottom slide-up notification popup. The popup message is: Currently, camping services are not available due to maintenance. The popup includes a Contact Us on WhatsApp button and a close button. Slides up from the bottom using CSS transform translateY. No reservation form is rendered or accessible.
+- **Resort page rule:** Two sub-sections — Campaigns (camp details displayed, booking temporarily disabled via maintenance popup) and Resort (Coming Soon, no booking functionality).
 - **Resort Coming Soon rule:** Coming Soon notice displayed; no booking functionality; construction has not started.
 - **Global Hover Effect Rule:** Every interactive button and navigation link responds to hover and click states with a color change from the restaurant's theme palette.
 - **Customer Reviews section rule:** Static representative review cards with platform labels if live data integration is unavailable.
@@ -704,8 +885,8 @@ The About Us page includes four experience sub-sections below the Our Story sect
 | User does not select any food item before clicking Confirm Reservation | Display error: Please select at least one food item to proceed with your reservation; disable or block submission |
 | User does not select a submission channel before clicking Confirm Reservation | Display an error prompting the user to select either Send via WhatsApp or Send via Gmail |
 | User does not select a payment method before clicking Confirm Reservation | Display an error prompting the user to select a payment method |
-| User selects a past date for reservation or campaign reservation | Display error: Please select a future date |
-| Number of guests or participants is zero or negative | Display error: Please enter a valid number |
+| User selects a past date for reservation | Display error: Please select a future date |
+| Number of guests is zero or negative | Display error: Please enter a valid number |
 | WhatsApp link fails to open | Display a fallback message with the WhatsApp number (03160605535) for manual contact |
 | Gmail mailto fails to open | Display a fallback message with the Gmail address (Leopardcaverestaurantofficial@gmail.com) for manual contact |
 | Gallery has no images loaded | Display placeholder image tiles with a loading or coming-soon state |
@@ -723,17 +904,36 @@ The About Us page includes four experience sub-sections below the Our Story sect
 | Video is playing and user scrolls it out of the viewport on mobile | Intersection Observer detects exit from viewport and pauses the video; confirmed working on iOS Safari and Android Chrome |
 | Video is playing and user scrolls it out of the viewport on desktop | Intersection Observer detects exit from viewport and pauses the video; confirmed working on Chrome, Firefox, Edge, Safari |
 | Intersection Observer not supported on an older browser | Implement a polyfill or fallback scroll event listener to replicate the auto-pause-on-scroll behavior |
-| Menu item Reserve a Table button is clicked | User is navigated to the Reservation Page with the corresponding menu item pre-selected via URL query parameter |
+| Featured video auto-play with sound is blocked by browser autoplay policy | Attempt to play unmuted after first user interaction (click, scroll, or tap) on the page as a fallback; do not silently fail |
+| Featured video enters viewport but remains muted on mobile | Ensure videoElement.muted = false is explicitly set before calling videoElement.play() in the Intersection Observer callback; confirmed working on iOS Safari and Android Chrome |
+| Featured video exits viewport but audio continues playing | Ensure videoElement.pause() and videoElement.muted = true are both called in the Intersection Observer exit callback |
+| Hero section title/description does not fade out after 5 seconds | Ensure the fade-out timer is initialized after the page has fully loaded and the loading screen has dismissed; use a CSS opacity transition with a JavaScript setTimeout of 5000ms |
+| Hero section title/description fade-out inadvertently hides the Menu or Reserve Table buttons | Ensure the fade-out CSS class or animation targets only the title, subheading, and tagline elements; buttons must remain unaffected and permanently visible |
+| Hero section text is not centered on mobile | Ensure the hero container has a defined height on mobile (e.g., 100vh) and uses flexbox with justify-content: center and align-items: center; text-align: center applied to all text elements; text block must be at the exact visual center of the background image |
+| Hero section text appears offset from the center of the background image on mobile | Verify that the hero container height matches the visible background image area; use absolute positioning with top: 50% and transform: translateY(-50%) or flexbox centering to align the text block to the true visual center of the image |
+| Reservation Page opens with Resort tab active instead of Restaurant tab | Ensure the Restaurant tab is set as the default active tab on every page load; no URL parameter or state should override this default |
+| Resort tab content is visible before the user clicks the Resort tab button | Ensure the Resort tab content is hidden by default (display: none or equivalent) and only rendered/shown when the Resort tab button is clicked |
+| Reservation Resort tab camping Reserve Now button opens a form | Ensure the button triggers only the maintenance slide-up popup; no form is rendered or accessible |
+| User clicks Reserve a Table on a menu card | A confirmation popup is displayed with options: Add More Items, Go to Reservation, Cancel / Close; no immediate redirect occurs |
+| User clicks Add More Items in the confirmation popup | Popup closes; selected item is added to the cart; user remains on the Menu Cards page |
+| User clicks Go to Reservation in the confirmation popup | All selected items are passed to the Reservation Page and pre-filled in the Pre-Order Food Items dropdown; user is navigated to the Reservation Page |
+| User clicks Cancel / Close in the confirmation popup | Popup closes; no item is added; user remains on the same page |
+| Cart state is lost on page refresh | If localStorage is used, cart state is restored on reload; if component state only, cart resets gracefully with no error |
 | URL query parameter item does not match any menu item in the predefined list | Reservation Page loads normally with no item pre-selected; no error is shown |
 | Menu images fail to load on Menu Images sub-page | Display a loading or unavailable state placeholder |
 | Menu Cards sub-page item has no price listed | Display the item card with a note indicating price to be confirmed |
-| Menu dropdown does not render correctly on mobile | Ensure the dropdown is touch-friendly and accessible on all mobile screen sizes |
-| Menu page toggle buttons do not respond on mobile | Ensure both toggle buttons are touch-friendly and function correctly on all mobile screen sizes |
+| Menu Landing Page cover image fails to load | Display the page with a themed dark fallback background; search box and both buttons remain fully visible and functional |
+| Menu button in navigation bar does not respond on mobile or desktop | Ensure routing and click handler are correctly implemented; Menu button must reliably navigate to /menu on all devices |
+| Menu page toggle buttons do not respond on mobile | Ensure both View Menu Cards and View Menu Images buttons on the Menu Landing Page are touch-friendly and function correctly on all mobile screen sizes |
+| Search input on Menu Landing Page or Menu Cards sub-page returns no results | Display a no results found message; do not hide the search box or break the page layout |
+| Search input is cleared by the user | Restore all menu items/cards to their default visible state immediately |
 | Guest searches for a menu item not in the list | Display a no results found message within the dropdown; no free text entry is permitted |
 | Guest selects an unavailable menu item | The item is shown with an Unavailable indicator; selectable with a clear warning |
 | Selected food items total cannot be calculated | Display the item in the billing table with a note indicating price to be confirmed; exclude from numeric total |
 | Payment QR code image fails to load | Display a placeholder with the account number or wallet address as text fallback |
 | Page heading is cut off or not visible at the top of the page | Ensure all page headings have sufficient top padding/margin to be fully visible on both mobile and desktop |
+| Hero section title or description text appears oversized on mobile | Apply responsive font sizing (clamp-based or breakpoint-based); ensure text does not overflow or wrap awkwardly on small screens |
+| Hero section buttons do not appear immediately on page load | Remove any delay, animation delay, or dependency on title fade-out; buttons must render visible at the same time as the hero text on both mobile and desktop |
 | Nearby Places photo fails to load | Display a placeholder image tile with the location name and description still visible |
 | Billing table has no items | Display an empty state message: No items selected yet |
 | Baskochi Meadows featured section background image fails to load | Display the featured section with a themed dark fallback color background; all text remains fully visible |
@@ -741,9 +941,9 @@ The About Us page includes four experience sub-sections below the Our Story sect
 | About Us experience sub-section background image fails to load | Display the sub-section with a themed dark fallback color background; all text remains fully visible and readable |
 | Slideshow transition is not smooth on low-end mobile devices | Ensure the CSS transition is hardware-accelerated using transform or opacity |
 | Page opens at a previous scroll position on mobile or desktop | Scroll position is reset to the top on every page load or navigation event |
-| Campaign reservation form submitted with missing required fields | Display inline validation error messages; prevent submission |
-| Campaign reservation WhatsApp link fails to open | Display a fallback message with the WhatsApp number (03160605535) for manual contact |
-| Campaign reservation Gmail mailto fails to open | Display a fallback message with the Gmail address (Leopardcaverestaurantofficial@gmail.com) for manual contact |
+| User clicks Reserve Now on a campaign card (Resort Page or Reservation Resort tab) | Display the bottom slide-up maintenance popup; do not open any reservation form |
+| Campaign maintenance popup WhatsApp button fails to open | Display the WhatsApp number (03160605535) as visible text within the popup as a fallback |
+| Campaign maintenance popup does not slide up correctly on mobile | Ensure the slide-up animation is implemented with CSS transform (translateY) for hardware-accelerated performance on iOS Safari and Android Chrome |
 | User navigates to Resort sub-section expecting booking | Display a clear Coming Soon notice; no booking functionality is available |
 | Blog article content fails to load | Display the article card with the title and a loading or unavailable state for the content |
 | Social media links on Blogs page are unreachable | Ensure all links use the exact specified URLs; display the platform name as a tooltip on hover |
@@ -775,8 +975,8 @@ The About Us page includes four experience sub-sections below the Our Story sect
 - The back button is positioned at the top-left corner of the screen, does not obstruct primary content, and is rendered with sufficient z-index above all other page elements
 - The back button navigates correctly to the previous page in browser history on both mobile and desktop
 - On the Home Page with no prior browser history, the back button is hidden or disabled gracefully without causing any error
-- The Gallery Reels/Videos sub-page (View More Videos page) displays a fixed/sticky back button that navigates back to the Home Page and is always visible on scroll
-- The About Us page experience sub-sections (Unforgettable Moments, Natural Beauty, Cultural Heritage, Exceptional Service) display the correct assigned uploaded images as backgrounds, with no AI-generated images, proper fitting (no distortion or awkward cropping), semi-transparent dark overlay for text readability, and full responsiveness on both mobile and desktop
+- The Gallery Reels/Videos sub-page displays a fixed/sticky back button that navigates back to the Home Page and is always visible on scroll
+- The About Us page experience sub-sections display the correct assigned uploaded images as backgrounds, with no AI-generated images, proper fitting, semi-transparent dark overlay, and full responsiveness
 - Homepage meta title is: Leopard Cave Restaurant | Best Restaurant in Hunza & Attabad Lake
 - Homepage meta description is: Discover Leopard Cave Restaurant – one of the best restaurants in Hunza near Attabad Lake. Enjoy local Hunza food, Pakistani & international dishes with a beautiful natural view.
 - All pages have unique, keyword-rich title tags and meta descriptions targeting the updated keyword set
@@ -785,18 +985,33 @@ The About Us page includes four experience sub-sections below the Our Story sect
 - All page URLs are clean, lowercase, hyphen-separated, and keyword-friendly
 - Hashtags (#HunzaFood #AttabadLake #HunzaValley #BestRestaurantHunza #GilgitBaltistan #TravelHunza #HunzaCuisine) appear in blog article footers and social media integration sections
 - A promotional popup appears on the Home Page 10 seconds after loading; auto-dismisses after 15–20 seconds; includes a visible close (X) button; links to https://futurenaire.netlify.app/ in a new tab; fully responsive
-- Menu navigation button displays a dropdown on hover or click with two options: Menu Cards and Menu Images
-- Menu page displays two toggle buttons: View Menu Cards and View Menu Images; both share the same base color in default state; active button changes color; both have visible borders, padding, and hover effects
-- Menu Cards sub-page displays all menu items organized by the specified categories in square box cards, each with item name, price, short description, and a Reserve a Table button; fully responsive
+- The hero section title (H1), subheading (H2), and tagline fade out after 5 seconds using a smooth CSS opacity transition; the fade-out does not affect the Menu button, Reserve Table button, or any other interactive element
+- On mobile screens, the hero section title, subheading, and tagline are centered both horizontally and vertically — positioned at the exact visual center of the background slideshow image; text-align is centered; the hero container has a defined height to enable vertical centering; this applies on both mobile and desktop as specified
+- The Menu button and Reserve Table button on the Home Page hero section are visible immediately when the page loads and remain permanently visible at all times, including after the title/description/tagline have faded out; this applies on both mobile and desktop
+- The hero section title and description text on mobile are displayed at a reduced, balanced, readable font size with proper line spacing, no oversized appearance, no awkward wrapping, and a clean modern typographic hierarchy
+- The featured video on the Home Page automatically begins playing AND is automatically unmuted (sound ON) when it scrolls into the visible viewport; if browser autoplay restrictions apply, the video plays unmuted after the first user interaction on the page
+- The featured video automatically pauses AND is muted when scrolled out of the visible viewport; audio does not continue when the video is off-screen
+- The featured video auto-unmute and auto-mute behavior is confirmed working on iOS Safari, Android Chrome, and desktop browsers
+- The Reservation Page displays two tab buttons at the top: Restaurant and Resort; both buttons are always visible
+- When the Reservation Page is opened, the Restaurant tab is automatically active and its content is displayed by default
+- The Resort tab content is not shown until the user clicks the Resort tab button; switching between tabs is smooth with no page reload; the active tab is visually distinguished
+- The Resort tab within the Reservation Page contains two sub-sections: (A) Camping Booking with camp pricing/capacity details and a Reserve Now button that triggers the maintenance slide-up popup; (B) Leopard Resort Coming Soon notice with no booking functionality
+- The Menu button in the navigation bar is fully functional on both mobile and desktop; clicking it reliably navigates to the Menu Landing Page (/menu)
+- The Menu Landing Page displays a cover image, a search input box, and two buttons: View Menu Cards and View Menu Images; no dropdown from the navigation bar; this flow works correctly on both mobile and desktop
+- The search input on the Menu Landing Page filters the full 40-item menu list in real time as the user types; matching items are shown instantly; non-matching items are hidden; a no results message is shown when no items match; clearing the input restores the default state
+- The search input on the Menu Cards sub-page filters menu item cards in real time as the user types; matching cards are shown; non-matching cards are hidden; a no results message is shown when no items match; clearing the input restores all cards
+- Menu Cards sub-page displays all 40 menu items organized by the specified categories in square box cards; fully responsive
 - Menu Images sub-page displays all five uploaded menu images as full cards with no cropping, each with a Reserve Now button; fully responsive
-- Clicking the Reserve a Table button on any menu card navigates to the Reservation Page with that item pre-selected in the Pre-Order Food Items dropdown via URL query parameter; pre-selection works correctly on both mobile and desktop
+- Clicking the Reserve a Table button on any menu card displays a confirmation popup with the message: Do you want to proceed to reservation or add more items? with Add More Items, Go to Reservation, and Cancel / Close buttons; no immediate redirect occurs
+- Users can select multiple items from the Menu Cards page; selected items are stored and a visible cart indicator is shown
+- Clicking Go to Reservation in the popup navigates to the Reservation Page with all selected items pre-filled in the Pre-Order Food Items dropdown
+- The Pre-Order Food Items dropdown on the Reservation Page contains all 40 menu items listed in Section 3.9.1; no item is missing
 - Gallery page contains two clearly distinct tabs: Images and Reels/Videos
 - All navigation bar links include a hover/active color change consistent with the restaurant's theme
 - All buttons site-wide display a hover and click color change consistent with the restaurant's theme
 - Navigation bar and logo are rendered as a transparent overlay on top of all slideshow images
 - Home page hero slideshow Image 1 retains its original black sidebars; all other slideshow images fill side letterbox areas with dark-themed colors
 - Home page hero slideshow transitions every 1 second with a smooth, fast transition; runs continuously on both mobile and desktop
-- Home page hero section displays top text initially; top text fades out and then the Menu and Reserve Table buttons appear at the bottom center
 - Homepage layout order is correct: Hero Slideshow → Introduction → Experience Highlights → Featured Video → Reels (max 4) → View More button → Gallery Images → Premium Facilities → Customer Reviews → Visit Us Today / Location
 - Homepage top-4 reels below the featured video are in the correct order as specified
 - Featured video on homepage displays the watermark www.leopardcaverestaurant.com as an on-screen overlay without overlapping video controls
@@ -805,7 +1020,7 @@ The About Us page includes four experience sub-sections below the Our Story sect
 - Homepage reels sub-section displays a maximum of 4 reels at a reduced, balanced size on desktop; a View More button navigates to the Reels/Videos sub-page
 - Gallery Reels/Videos sub-page displays all eight videos at a reduced, balanced player size; videos do not autoplay
 - All video players enforce single-video playback
-- All video players across the entire site automatically pause when scrolled out of the visible viewport; this behavior is confirmed working on both mobile (iOS Safari, Android Chrome) and desktop (Chrome, Firefox, Edge, Safari)
+- All video players across the entire site automatically pause when scrolled out of the visible viewport; confirmed working on both mobile and desktop
 - Gallery Images sub-page displays nine images; slideshow-only image (file-akxu72ukunsw.jpeg) does NOT appear
 - Home page Gallery section renders with the heading 「A Glimpse Into Our World」 and displays nine images; slideshow-only image does NOT appear
 - Home page Premium Facilities section displays all facility cards at the same uniform size; Baskochi Track Access is the first card with its background image
@@ -813,8 +1028,7 @@ The About Us page includes four experience sub-sections below the Our Story sect
 - Home page Visit Us Today / Location section displays a live interactive map identical to the Location Page map; full restaurant details visible
 - Homepage displays Facebook, Instagram, and TikTok floating icons in the bottom corner using the exact specified URLs, opening in a new tab
 - Social media icons for WhatsApp, Facebook, Instagram, and TikTok are visible site-wide in the footer
-- Reservation Page is redesigned with a premium card-based layout divided into clearly labeled sections
-- Reservation Page heading and intro description text have sufficient top padding/margin and are fully visible on both mobile and desktop
+- Reservation Page is redesigned with a premium card-based layout divided into clearly labeled sections within the Restaurant tab
 - Reservation Page displays the advance payment policy notice in a highlighted box with an info/warning icon above the form sections
 - Pre-Order Food Items field is required; validation works on both desktop and mobile
 - Dynamic billing table updates in real time; items with no confirmed price show a note and are excluded from the numeric total
@@ -840,8 +1054,9 @@ The About Us page includes four experience sub-sections below the Our Story sect
 - Giyalin blog displays the user-uploaded image: file name: images (1).jpg, URL: https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260403/file-ap0qne5qvcow.jpg
 - Social Media sub-section displays Facebook, Instagram, and TikTok as prominent cards or link buttons using the exact specified URLs, opening in new tabs
 - Resort page is accessible from the navigation bar as 「Resort」 and contains two sub-sections: Campaigns and Resort
-- Campaigns sub-section displays at least one campaign card with a Reserve Now button that opens the fully functional Campaign Reservation Form
-- Campaign Reservation Form collects all required fields, includes payment method selection with correct QR codes, and sends reservation details via WhatsApp or Gmail in the structured format; data is stored in the backend
+- Campaigns sub-section clearly displays camp booking details: 1 Tent = Maximum 3 people; Price per tent per night = PKR 3,000
+- Clicking the Reserve Now button on any campaign card triggers a bottom slide-up notification popup with the message: Currently, camping services are not available due to maintenance; the popup includes a Contact Us on WhatsApp button and a close button; no reservation form is opened
+- The campaign maintenance popup slides up from the bottom using CSS transform translateY, is clean and modern in design, and works correctly on both mobile and desktop
 - Resort sub-section displays a clear Coming Soon notice with no booking functionality
 - All internal page links navigate to the correct destination
 
@@ -856,5 +1071,7 @@ The About Us page includes four experience sub-sections below the Our Story sect
 - Live API integration with Google Maps or Facebook for real-time review fetching
 - Dynamic availability management for menu items via an admin interface (availability indicators are static for this version)
 - Resort booking functionality (Resort is Coming Soon; construction has not started)
+- Active campaign reservation form (temporarily disabled due to maintenance; replaced by maintenance notification popup)
 - Blog content management system or admin interface for adding/editing blog articles
 - AI-generated images for any blog article or any section of the website
+- Navigation bar dropdown for the Menu button (replaced by Menu Landing Page flow)

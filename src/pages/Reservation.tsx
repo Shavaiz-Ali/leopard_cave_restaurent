@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CalendarIcon, Clock, Users, Phone, User, Mail, MessageCircle, Utensils, X, Search } from 'lucide-react';
+import { CalendarIcon, Clock, Users, Phone, User, Mail, MessageCircle, Utensils, X, Search, Tent, Building2 } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
@@ -33,6 +33,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Menu items with availability
 const menuItems = [
@@ -109,10 +110,41 @@ export default function Reservation() {
   const [searchQuery, setSearchQuery] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null);
 
-  // Auto-select item from URL parameter
+  // Auto-select item(s) from URL parameter
   useEffect(() => {
     const itemId = searchParams.get('item');
-    if (itemId && selectedItems.length === 0) {
+    const itemIds = searchParams.get('items');
+    
+    if (itemIds && selectedItems.length === 0) {
+      // Handle multiple items
+      const ids = itemIds.split(',');
+      const itemsToAdd: SelectedItem[] = [];
+      
+      ids.forEach(id => {
+        const menuItem = menuItems.find(item => item.id === id);
+        if (menuItem && menuItem.available) {
+          const existingItem = itemsToAdd.find(item => item.id === id);
+          if (existingItem) {
+            existingItem.quantity += 1;
+          } else {
+            itemsToAdd.push({
+              id: menuItem.id,
+              name: menuItem.name,
+              price: menuItem.price,
+              quantity: 1
+            });
+          }
+        }
+      });
+      
+      if (itemsToAdd.length > 0) {
+        setSelectedItems(itemsToAdd);
+        toast.success('Menu Items Added', {
+          description: `${itemsToAdd.length} item(s) have been added to your pre-order.`,
+        });
+      }
+    } else if (itemId && selectedItems.length === 0) {
+      // Handle single item (backward compatibility)
       const menuItem = menuItems.find(item => item.id === itemId);
       if (menuItem && menuItem.available) {
         setSelectedItems([{
@@ -121,7 +153,6 @@ export default function Reservation() {
           price: menuItem.price,
           quantity: 1
         }]);
-        // Show success toast
         toast.success('Menu Item Added', {
           description: `${menuItem.name} has been added to your pre-order.`,
         });
@@ -336,11 +367,30 @@ export default function Reservation() {
         <div className="container px-4 md:px-8 max-w-4xl mx-auto space-y-12 mt-8">
           <BackButton />
           <div className="text-center space-y-3 pt-8">
-            <h1 className="text-3xl md:text-5xl font-bold text-primary tracking-tight">Reserve Your Table</h1>
+            <h1 className="text-3xl md:text-5xl font-bold text-primary tracking-tight">Reserve Your Experience</h1>
             <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Book your table and enjoy a memorable lunch or dinner with a breathtaking view of Attabad Lake.
+              Book your table at our restaurant or reserve camping at our resort
             </p>
           </div>
+
+          {/* Tabs for Restaurant and Resort */}
+          <Tabs defaultValue="restaurant" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-8">
+              <TabsTrigger value="restaurant" className="text-base md:text-lg font-bold py-3">
+                <Utensils className="h-5 w-5 mr-2" />
+                Restaurant
+              </TabsTrigger>
+              <TabsTrigger value="resort" className="text-base md:text-lg font-bold py-3">
+                <Tent className="h-5 w-5 mr-2" />
+                Resort
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Restaurant Tab Content */}
+            <TabsContent value="restaurant" className="space-y-8">
+              <div className="text-center">
+                <p className="text-muted-foreground">Book your table and enjoy a memorable lunch or dinner with a breathtaking view of Attabad Lake.</p>
+              </div>
 
         {/* Advance Payment Policy Notice */}
         <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-500/50 rounded-2xl p-6 shadow-lg">
@@ -738,6 +788,100 @@ export default function Reservation() {
             </Form>
           </CardContent>
         </Card>
+            </TabsContent>
+
+            {/* Resort Tab Content */}
+            <TabsContent value="resort" className="space-y-8">
+              {/* Camping Booking Section */}
+              <Card className="border-none shadow-2xl bg-card rounded-3xl">
+                <CardHeader className="text-center pb-4">
+                  <div className="flex justify-center mb-4">
+                    <div className="p-4 bg-primary/10 rounded-full">
+                      <Tent className="h-10 w-10 text-primary" />
+                    </div>
+                  </div>
+                  <CardTitle className="text-2xl md:text-3xl font-bold text-primary">Camping Reservation</CardTitle>
+                  <CardDescription className="text-base">
+                    Book your camping experience at Leopard Cave Resort
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Pricing Information */}
+                  <div className="bg-primary/10 rounded-xl p-6 space-y-3 border-2 border-primary/20">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-foreground text-lg">Price per Tent (per night):</span>
+                      <span className="text-3xl font-extrabold text-primary">PKR 3,000</span>
+                    </div>
+                    <div className="flex items-center justify-between text-base">
+                      <span className="text-muted-foreground">Maximum Capacity:</span>
+                      <span className="font-bold text-foreground">3 People per Tent</span>
+                    </div>
+                  </div>
+
+                  {/* Features List */}
+                  <div className="space-y-3">
+                    <h4 className="font-bold text-foreground text-lg">Included Features:</h4>
+                    <ul className="space-y-2 text-muted-foreground">
+                      <li className="flex items-start gap-2">
+                        <span className="text-primary font-bold">✓</span>
+                        <span>Premium camping tents with comfortable bedding</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-primary font-bold">✓</span>
+                        <span>Bonfire and BBQ facilities</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-primary font-bold">✓</span>
+                        <span>Guided hiking tours to Baskochi Meadows</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-primary font-bold">✓</span>
+                        <span>Stunning views of Attabad Lake</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-primary font-bold">✓</span>
+                        <span>Restaurant dining access</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Booking Button */}
+                  <Button
+                    onClick={() => {
+                      toast.info('Camping Services Temporarily Unavailable', {
+                        description: 'Currently, camping services are not available due to maintenance. Please contact us on WhatsApp for more information.',
+                        duration: 6000,
+                        action: {
+                          label: 'Contact on WhatsApp',
+                          onClick: () => window.open('https://wa.me/923160605535', '_blank')
+                        },
+                      });
+                    }}
+                    className="w-full rounded-full font-bold text-lg py-6"
+                  >
+                    <Tent className="h-5 w-5 mr-2" />
+                    Book Camping Now
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Coming Soon Section */}
+              <Card className="border-none shadow-2xl bg-gradient-to-br from-primary/10 to-secondary/10 rounded-3xl">
+                <CardContent className="p-12 text-center space-y-4">
+                  <div className="flex justify-center">
+                    <div className="p-6 bg-primary/20 rounded-full">
+                      <Building2 className="h-16 w-16 text-primary" />
+                    </div>
+                  </div>
+                  <h3 className="text-3xl md:text-4xl font-extrabold text-primary">Leopard Cave Resort</h3>
+                  <p className="text-xl md:text-2xl font-bold text-secondary">Coming Soon</p>
+                  <p className="text-muted-foreground max-w-xl mx-auto leading-relaxed">
+                    We're working on bringing you an exceptional resort experience with premium accommodations and world-class amenities. Stay tuned for updates!
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
       </div>
 
       {/* Submission Method Dialog */}

@@ -30,8 +30,8 @@ interface RouteConfig {
 
 const routes: RouteConfig[] = [
   { name: 'Home', path: '/', element: <Home /> },
-  { name: 'Menu Landing', path: '/menu-landing', element: <MenuLanding /> },
-  { name: 'Menu Images', path: '/menu', element: <MenuImages /> },
+  { name: 'Menu Landing', path: '/menu', element: <MenuLanding /> },
+  { name: 'Menu Images', path: '/menu-images', element: <MenuImages /> },
   { name: 'Menu Cards', path: '/menu-cards', element: <MenuCards /> },
   { name: 'Gallery', path: '/gallery', element: <Gallery /> },
   { name: 'Videos', path: '/videos', element: <Videos /> },
