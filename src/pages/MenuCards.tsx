@@ -1,12 +1,11 @@
+import { useState, useEffect } from "react";
 import BackButton from "@/components/common/BackButton";
 import SEO from "@/components/common/SEO";
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Utensils, ShoppingCart, Plus, Minus, Trash2, Search } from 'lucide-react';
+import { Utensils, ShoppingCart, Plus, Minus, Trash2, Search, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -15,6 +14,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { supabase } from '@/utils/supabase';
 
 interface CartItem {
   id: string;
@@ -23,315 +23,69 @@ interface CartItem {
   quantity: number;
 }
 
+interface MenuItem {
+  id: string;
+  name: string;
+  price: string;
+  description: string;
+  category_id: string;
+  categories: { name: string } | null;
+}
+
+interface Category {
+  id: string;
+  name: string;
+}
+
 export default function MenuCards() {
   const navigate = useNavigate();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showDialog, setShowDialog] = useState(false);
   const [selectedItem, setSelectedItem] = useState<{ id: string; name: string; price: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const menuItems = [
-    // Local Delights (Items 1-3)
-    { 
-      id: '1', 
-      name: 'Burush Shapick', 
-      category: 'Local Delights', 
-      price: 'PKR 650',
-      description: 'Authentic local flatbread, crafted with caramelized onions and an aromatic blend of handpicked local herbs, then lightly drizzled with rich walnut oil tradition and the essence of mountain flavors to every bite.'
-    },
-    { 
-      id: '2', 
-      name: 'Chap Shuroo', 
-      category: 'Local Delights', 
-      price: 'PKR 1,000',
-      description: 'Tender boneless yak meat, slow-braised with caramelized onions and wild local herbs for a deep, earthy flavor. Served with hand-kneaded traditional wheat dough, home-style potato wedges, and a savory local dipping sauce.'
-    },
-    { 
-      id: '3', 
-      name: 'Chicken Deroo', 
-      category: 'Local Delights', 
-      price: 'PKR 500',
-      description: 'Boneless chicken cooked with fragrant local herbs, onion wrapped in freshly baked local wheat shapick, served with golden home-style potato wedges and a vibrant, tangy local chutney.'
-    },
 
-    // Valley Soups (Items 4-6)
-    { 
-      id: '4', 
-      name: 'Dawdo Soup', 
-      category: 'Valley Soups', 
-      price: 'PKR 450',
-      description: 'A nourishing, slow-cooked soup made with homemade laksha flat noodles, tender halize mountain yak meat cuts, and ba page chap, gently simmered with aromatic local herbs.'
-    },
-    { 
-      id: '5', 
-      name: 'Hari Soup', 
-      category: 'Valley Soups', 
-      price: 'PKR 750',
-      description: 'Local barley, handmade laksha (noodles), halize (fermented grains), and mixed mountain herbs. Slow-cooked over an open fire, it brings the deep, smoky flavors of our highland home straight to your bowl.'
-    },
-    { 
-      id: '6', 
-      name: 'Shirijoon Soup', 
-      category: 'Valley Soups', 
-      price: 'PKR 2,000',
-      description: 'A rich and earthy mountain delicacy made with wild morel mushrooms handpicked from the highland forests. Slow-cooked with golden onions, fresh cream, this soup brings out the deep, nutty flavor of the prized shrijoon (morel).'
-    },
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    // From the Mountain Pod (Item 7)
-    { 
-      id: '7', 
-      name: 'Hot & Sour', 
-      category: 'From the Mountain Pod', 
-      price: 'PKR 500',
-      description: 'A classic, flavors - spicy heat from chili and pepper, and a tangy kick from vinegar or fermented ingredients. Traditionally made with a rich broth, includes a mix of local mountain vegetables, free-range chicken.'
-    },
-    { 
-      id: '11', 
-      name: 'Chicken Corn Soup', 
-      category: 'From the Mountain Pod', 
-      price: 'PKR 450',
-      description: 'A comforting blend of tender chicken and sweet corn in a rich, flavorful broth.'
-    },
+  useEffect(() => {
+    const fetchMenuData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-    // Mountain Greens (Items 8-9)
-    { 
-      id: '8', 
-      name: 'Hari Ka Biranze Salad', 
-      category: 'Mountain Greens', 
-      price: 'PKR 600',
-      description: 'Made with hari (local barley) and biranze (mulberry) - toasted to perfection with onions, tomatoes, and cucumber a honey-apple cider vinaigrette, finished with a touch of homeland burushe. It\'s a vibrant fusion of highland flavors.'
-    },
-    { 
-      id: '9', 
-      name: 'Fresh Garden Salad', 
-      category: 'Mountain Greens', 
-      price: 'PKR 400',
-      description: 'Vibrant celebration of freshness, crafted with local mountain vegetables grown in pure air and soil. This salad brings together crisp greens, seasonal roots, and wild herbs, all handpicked from the heart of the highlands.'
-    },
+        // Fetch active categories
+        const { data: catData, error: catError } = await supabase
+          .from('categories')
+          .select('id, name')
+          .eq('status', 'Active')
+          .order('created_at', { ascending: true });
 
-    // Bite Before the Peak (Item 10 + variations)
-    { 
-      id: '10', 
-      name: 'Mountain Yak Karahi', 
-      category: 'Bite Before the Peak', 
-      price: 'PKR 3,000 (1kg)',
-      description: 'A traditional karahi, made with tender cuts of locally raised yak meat slow-cooked in a fragrant blend of fresh mountain tomatoes, halizi (turmeric), and gawkomaricho (black pepper), this dish is fired up with maricho (chilies) for a rich in flavor. Served with a side of fresh seasonal salad and warm local roti.'
-    },
-    { 
-      id: '10b', 
-      name: 'Pasture Mutton Karahi', 
-      category: 'Bite Before the Peak', 
-      price: 'PKR 3,500 (1kg)',
-      description: 'Tender pasture-raised mutton cooked in traditional karahi style with aromatic spices and fresh herbs.'
-    },
-    { 
-      id: '10c', 
-      name: 'Free Range Chicken Karahi', 
-      category: 'Bite Before the Peak', 
-      price: 'PKR 2,700 (1kg)',
-      description: 'Free-range chicken prepared in authentic karahi style with rich tomato-based gravy and mountain spices.'
-    },
+        if (catError) throw catError;
+        setCategories(catData || []);
 
-    // Others (Items 12-13)
-    { 
-      id: '12', 
-      name: 'Balling Kham', 
-      category: 'Others', 
-      price: 'PKR 3,200',
-      description: 'A traditional highland specialty featuring authentic local ingredients and time-honored cooking methods.'
-    },
-    { 
-      id: '13', 
-      name: 'Chap Za Laksha', 
-      category: 'Others', 
-      price: 'Price on request',
-      description: 'Traditional handmade noodles served with authentic local accompaniments and flavorful broth.'
-    },
+        // Fetch all menu items with their category name
+        const { data: itemData, error: itemError } = await supabase
+          .from('menu_items')
+          .select(`
+            id, name, price, description, category_id,
+            categories ( name )
+          `)
+          .order('created_at', { ascending: true });
 
-    // Glacier Flow Beverages (Items 14-20)
-    { 
-      id: '14', 
-      name: 'Chamuse', 
-      category: 'Glacier Flow Beverages', 
-      price: 'PKR 500',
-      description: 'A pure and refreshing drink made from sun-dried local apricots crystal rise mountain water. No sugar, no additive, just the natural sweetness of the fruit.'
-    },
-    { 
-      id: '15', 
-      name: 'Peak Fruit Fizz', 
-      category: 'Glacier Flow Beverages', 
-      price: 'PKR 500',
-      description: 'Fresh mountain apricots muddled with wild local herbs, sparkling mountain ice water, and a touch of homeland honey served over crushed ice.'
-    },
-    { 
-      id: '16', 
-      name: 'Season\'s Essence', 
-      category: 'Glacier Flow Beverages', 
-      price: 'PKR 600',
-      description: 'A refreshing blend crafted from the freshest fruits of the season handpicked at peak ripeness from local orchards and gardens. Each glass captures the true taste of nature.'
-    },
-    { 
-      id: '17', 
-      name: 'Lemon Peak Spark', 
-      category: 'Glacier Flow Beverages', 
-      price: 'PKR 300',
-      description: 'A refreshing burst of mountain-grown mint, zesty ginger, fresh lemon, and a dash of local honey lightly sparkling with mountain soda water.'
-    },
-    { 
-      id: '18', 
-      name: 'Soft Drinks', 
-      category: 'Glacier Flow Beverages', 
-      price: 'PKR 150',
-      description: 'Selection of popular carbonated beverages.'
-    },
-    { 
-      id: '19', 
-      name: 'Small Water', 
-      category: 'Glacier Flow Beverages', 
-      price: 'PKR 100',
-      description: 'Pure mountain spring water in small bottle.'
-    },
-    { 
-      id: '20', 
-      name: 'Large Water', 
-      category: 'Glacier Flow Beverages', 
-      price: 'PKR 100',
-      description: 'Pure mountain spring water in large bottle.'
-    },
+        if (itemError) throw itemError;
+        setMenuItems((itemData as any) || []);
+      } catch (err: any) {
+        setError('Failed to load menu. Please try again later.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // Peak Warmth (Items 21-29)
-    { 
-      id: '21', 
-      name: 'Cappuccino', 
-      category: 'Peak Warmth', 
-      price: 'PKR 400',
-      description: 'Rich espresso topped with steamed milk foam.'
-    },
-    { 
-      id: '22', 
-      name: 'Americano', 
-      category: 'Peak Warmth', 
-      price: 'PKR 300',
-      description: 'Bold espresso diluted with hot water.'
-    },
-    { 
-      id: '23', 
-      name: 'Espresso', 
-      category: 'Peak Warmth', 
-      price: 'PKR 300',
-      description: 'Strong, concentrated coffee shot.'
-    },
-    { 
-      id: '24', 
-      name: 'Latte', 
-      category: 'Peak Warmth', 
-      price: 'PKR 400',
-      description: 'Smooth espresso with steamed milk.'
-    },
-    { 
-      id: '25', 
-      name: 'Rose Petal Tea', 
-      category: 'Peak Warmth', 
-      price: 'PKR 200',
-      description: 'Delicate tea infused with fragrant rose petals.'
-    },
-    { 
-      id: '26', 
-      name: 'Mountain Tea', 
-      category: 'Peak Warmth', 
-      price: 'PKR 150',
-      description: 'Traditional highland tea blend.'
-    },
-    { 
-      id: '27', 
-      name: 'Honey Tea', 
-      category: 'Peak Warmth', 
-      price: 'PKR 250',
-      description: 'Soothing tea sweetened with pure local honey.'
-    },
-    { 
-      id: '28', 
-      name: 'Matka Chai', 
-      category: 'Peak Warmth', 
-      price: 'PKR 250',
-      description: 'Traditional clay pot tea with authentic flavor.'
-    },
-    { 
-      id: '29', 
-      name: 'Dhood Patti Chai', 
-      category: 'Peak Warmth', 
-      price: 'PKR 250',
-      description: 'Creamy milk tea brewed to perfection.'
-    },
-
-    // Highlanders Snacks (Items 30-35)
-    { 
-      id: '30', 
-      name: 'Highland Yak Burger', 
-      category: 'Highlanders Snacks', 
-      price: 'PKR 1,300',
-      description: 'Featuring a juicy yak meat patty, grilled to perfection and layered with caramelized onions, melted cheese, and a handful of fresh local greens. Soft, toasted bun and served with a side of crispy homeland-style potato wedges.'
-    },
-    { 
-      id: '31', 
-      name: 'Zinger Crunch Burger', 
-      category: 'Highlanders Snacks', 
-      price: 'PKR 1,150',
-      description: 'A deep-fried chicken fillet, marinated in bold seasonings and fried to golden perfection. Layered with fresh lettuce, creamy garlic mayo, and served in a soft toasted bun for the perfect crunch in every bite.'
-    },
-    { 
-      id: '32', 
-      name: 'Crispy Cluck', 
-      category: 'Highlanders Snacks', 
-      price: 'PKR 1,450',
-      description: 'Juicy, tender pieces of free-range chicken, marinated in house spices and double-crisped. Served hot with a crunchy outer layer and bursting with homeland potato wedges.'
-    },
-    { 
-      id: '33', 
-      name: 'Walnut Dip', 
-      category: 'Highlanders Snacks', 
-      price: 'Price on request',
-      description: 'Rich, creamy dip made from locally sourced walnuts with aromatic spices.'
-    },
-    { 
-      id: '34', 
-      name: 'Homeland Potato Fries', 
-      category: 'Highlanders Snacks', 
-      price: 'PKR 550',
-      description: 'Crispy golden fries made from fresh highland potatoes.'
-    },
-    { 
-      id: '35', 
-      name: 'Homeland Potato Chili Fries', 
-      category: 'Highlanders Snacks', 
-      price: 'PKR 750',
-      description: 'Crispy fries loaded with rich chili, melted cheese, handpick herbs. Served with garlic mayo.'
-    },
-
-    // From the Mountain Wok (Items 36-37)
-    { 
-      id: '36', 
-      name: 'Mountain Yak Chili Dry', 
-      category: 'From the Mountain Wok', 
-      price: 'PKR 1,300',
-      description: 'A bold fusion of spice and mountain flavor our Mountain Yak Chili Dry features tender strips of yak meat, stir-fried with fresh chilies, garlic, and onions in a smoky, spicy glaze. Served with classic egg fried rice.'
-    },
-    { 
-      id: '37', 
-      name: 'Sweet & Sour Chicken', 
-      category: 'From the Mountain Wok', 
-      price: 'PKR 1,500',
-      description: 'A vibrant twist on our Mountain Sweet & Sour Chicken tender free-range chicken, stir-fried with local vegetables and glazed in a tangy-sweet & sour sauce a unique highland flavor served with fragrant steamed rice.'
-    },
-
-    // Mountain Feast (Item 38)
-    { 
-      id: '38', 
-      name: 'Grilled Beef Steak', 
-      category: 'Mountain Feast', 
-      price: 'PKR 3,000',
-      description: 'Tender yak meat, marinated in fresh onion juice and a blend of local herbs, flame-grilled for a rich, smoky flavor creamy mashed potatoes and finished with a traditional gakowmarcho sauce for a bold, local touch.'
-    },
-  ];
+    fetchMenuData();
+  }, []);
 
   const handleAddToCart = () => {
     if (!selectedItem) return;
@@ -353,7 +107,6 @@ export default function MenuCards() {
   const handleGoToReservation = () => {
     if (!selectedItem) return;
     
-    // Add current item to cart if not already there
     const existingItem = cart.find(item => item.id === selectedItem.id);
     let finalCart = cart;
     
@@ -367,7 +120,6 @@ export default function MenuCards() {
       finalCart = [...cart, { ...selectedItem, quantity: 1 }];
     }
     
-    // Navigate to reservation with all cart items
     const itemIds = finalCart.map(item => item.id).join(',');
     navigate(`/reservation?items=${itemIds}`);
   };
@@ -390,19 +142,12 @@ export default function MenuCards() {
     return cart.reduce((sum, item) => sum + item.quantity, 0);
   };
 
-  const categories = [
-    'Local Delights',
-    'Valley Soups',
-    'From the Mountain Pod',
-    'Mountain Greens',
-    'Bite Before the Peak',
-    'Others',
-    'Glacier Flow Beverages',
-    'Peak Warmth',
-    'Highlanders Snacks',
-    'From the Mountain Wok',
-    'Mountain Feast'
-  ];
+  const getFilteredItemsForCategory = (categoryId: string) => {
+    return menuItems.filter(item =>
+      item.category_id === categoryId &&
+      item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  };
 
   return (
     <>
@@ -451,20 +196,30 @@ export default function MenuCards() {
           </div>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="text-muted-foreground font-medium text-lg">Loading menu...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {!loading && error && (
+          <div className="text-center py-24">
+            <p className="text-destructive text-lg font-medium">{error}</p>
+          </div>
+        )}
+
         {/* Menu Items by Category */}
-        {categories.map((category) => {
-          const filteredItems = menuItems.filter(item => 
-            item.category === category && 
-            item.name.toLowerCase().includes(searchQuery.toLowerCase())
-          );
-          
-          // Only show category if it has matching items
+        {!loading && !error && categories.map((category) => {
+          const filteredItems = getFilteredItemsForCategory(category.id);
           if (filteredItems.length === 0) return null;
-          
+
           return (
-            <div key={category} className="space-y-6">
+            <div key={category.id} className="space-y-6">
               <div className="text-center">
-                <h2 className="text-3xl md:text-4xl font-bold text-primary uppercase">{category}</h2>
+                <h2 className="text-3xl md:text-4xl font-bold text-primary uppercase">{category.name}</h2>
                 <div className="h-1 w-20 bg-primary mx-auto mt-4 rounded-full" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -498,6 +253,23 @@ export default function MenuCards() {
             </div>
           );
         })}
+
+        {/* Empty State */}
+        {!loading && !error && categories.length === 0 && (
+          <div className="text-center py-20">
+            <Utensils className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
+            <p className="text-muted-foreground text-xl font-medium">Menu is being updated. Please check back soon!</p>
+          </div>
+        )}
+
+        {/* No search results */}
+        {!loading && !error && categories.length > 0 && menuItems.length > 0 &&
+          categories.every(cat => getFilteredItemsForCategory(cat.id).length === 0) && (
+          <div className="text-center py-20">
+            <Search className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
+            <p className="text-muted-foreground text-xl font-medium">No items match "<span className="text-primary">{searchQuery}</span>"</p>
+          </div>
+        )}
 
         {/* Call to Action */}
         <div className="text-center mt-20 p-12 bg-muted/50 rounded-3xl space-y-6 border border-primary/10">
