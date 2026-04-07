@@ -70,18 +70,18 @@ export default function AdminOverview() {
     );
   }
 
-  if (!loading && !data) {
-    return (
-      <AdminLayout>
-        <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
-          <Activity className="w-8 h-8 text-muted-foreground" />
-          <p className="text-muted-foreground">
-            No analytics data available yet.
-          </p>
-        </div>
-      </AdminLayout>
-    );
-  }
+  // if (!loading && !data) {
+  //   return (
+  //     <AdminLayout>
+  //       <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
+  //         <Activity className="w-8 h-8 text-muted-foreground" />
+  //         <p className="text-muted-foreground">
+  //           No analytics data available yet.
+  //         </p>
+  //       </div>
+  //     </AdminLayout>
+  //   );
+  // }
 
   return (
     <AdminLayout>
@@ -96,9 +96,9 @@ export default function AdminOverview() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3 bg-primary/5 px-4 py-2 rounded-full border border-primary/10">
+          <div className="flex items-center gap-1 bg-primary/5 px-4 !py-0 w-fit h-[40px] rounded-full border border-primary/10">
             <Zap className="w-5 h-5 text-emerald-500" />
-            <div>
+            <div className='flex items-center gap-2'>
               <p className="text-xs uppercase text-muted-foreground">Realtime</p>
               <p className="font-bold text-lg">{data?.realtimeUsers ?? 0}</p>
             </div>
@@ -110,8 +110,10 @@ export default function AdminOverview() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Total Users</CardTitle>
-              <Users className="w-4 h-4 text-primary" />
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-primary" />
+                <CardTitle>Total Users</CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold">{data?.totalUsers ?? 0}</p>
@@ -120,8 +122,10 @@ export default function AdminOverview() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Sessions</CardTitle>
-              <MousePointer2 className="w-4 h-4 text-blue-500" />
+              <div className="flex items-center gap-2">
+                <MousePointer2 className="w-4 h-4 text-blue-500" />
+                <CardTitle>Sessions</CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold">{data?.totalSessions ?? 0}</p>
@@ -130,8 +134,10 @@ export default function AdminOverview() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Engagement</CardTitle>
-              <Clock className="w-4 h-4 text-fuchsia-500" />
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-fuchsia-500" />
+                <CardTitle>Engagement</CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold">{data?.avgEngagementTime ?? '0'}</p>
@@ -140,8 +146,10 @@ export default function AdminOverview() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Events</CardTitle>
-              <BarChart3 className="w-4 h-4 text-emerald-500" />
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-emerald-500" />
+                <CardTitle>Events</CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold">{data?.totalEvents ?? 0}</p>
