@@ -38,7 +38,7 @@ export default async function handler(req: any, res: any) {
                 metrics: [{ name: "activeUsers" }],
                 dimensions: [
                     { name: "city" },
-                    { name: "unifiedPageScreenName" }
+                    { name: "unifiedScreenName" }
                 ],
             }
         );
