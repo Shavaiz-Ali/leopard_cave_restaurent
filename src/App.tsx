@@ -11,8 +11,8 @@ import adminRoutes from './adminRoutes';
 import { AuthProvider } from '@/contexts/AuthContext';
 
 const App: React.FC = () => {
-  // const isAdminDomain = window.location.hostname.includes('admin');
-  const isAdminDomain = true;
+  const isAdminDomain = window.location.hostname.includes('admin');
+  // const isAdminDomain = true;
 
   return (
     <HelmetProvider>
