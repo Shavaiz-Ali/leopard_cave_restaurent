@@ -30,10 +30,6 @@ export default function AdminOverview() {
     };
 
     loadAnalytics();
-
-    // optional auto-refresh
-    const interval = setInterval(loadAnalytics, 30000);
-    return () => clearInterval(interval);
   }, []);
 
   // FIXED trend merging
