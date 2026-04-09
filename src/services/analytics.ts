@@ -1,5 +1,4 @@
-import { formatDuration, formatK } from "@/helpers";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatDuration, formatK } from "@/helpers";
 import { AnalyticsData } from "@/types";
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];

@@ -23,3 +23,18 @@ export interface Attraction {
   description: string;
   image?: string;
 }
+
+export interface Blog {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  image: string;
+  image_storage_path: string | null;
+  author: string;
+  featured: boolean;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
