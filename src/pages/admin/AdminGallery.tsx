@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Progress } from "@/components/ui/progress";
-import { Plus, Trash2, Edit, Image as ImageIcon, Video, LayoutGrid, List as ListIcon, UploadCloud, X, FileImage, FileVideo, Link } from 'lucide-react';
+import { Plus, Trash2, Edit, Image as ImageIcon, Video, LayoutGrid, List as ListIcon, UploadCloud, X, FileImage, FileVideo, Link, Star } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { supabase } from '@/utils/supabase';
 import { toast } from 'sonner';
@@ -20,6 +21,7 @@ interface GalleryItem {
   title: string;
   alt_text: string | null;
   storage_path: string | null;
+  featured: boolean;
   created_at: string;
 }
 
@@ -50,6 +52,7 @@ export default function AdminGallery() {
   const [formTitle, setFormTitle] = useState('');
   const [formAlt, setFormAlt] = useState('');
   const [formExternalUrl, setFormExternalUrl] = useState('');
+  const [formFeatured, setFormFeatured] = useState(false);
 
   useEffect(() => {
     fetchItems(1);
@@ -88,6 +91,7 @@ export default function AdminGallery() {
     setSelectedFile(null);
     setFilePreview(null);
     setUploadProgress(0);
+    setFormFeatured(false);
     setEditingId(null);
   };
 
@@ -110,6 +114,7 @@ export default function AdminGallery() {
     setUploadProgress(0);
     // If item has no storage_path it came from an external URL
     setFormExternalUrl(item.storage_path ? '' : item.url);
+    setFormFeatured(item.featured || false);
     setIsDialogOpen(true);
   };
 
@@ -214,7 +219,7 @@ export default function AdminGallery() {
 
         const { data, error } = await supabase
           .from('gallery')
-          .update({ title: formTitle, alt_text: formAlt || null, ...extraFields })
+          .update({ title: formTitle, alt_text: formAlt || null, featured: formFeatured, ...extraFields })
           .eq('id', editingId)
           .select()
           .single();
@@ -231,6 +236,7 @@ export default function AdminGallery() {
           storage_path: storagePath,
           title: formTitle,
           alt_text: formAlt || null,
+          featured: formFeatured,
         }]);
         if (error) throw error;
         await fetchItems(1);
@@ -244,6 +250,7 @@ export default function AdminGallery() {
           storage_path: undefined,
           title: formTitle,
           alt_text: formAlt || null,
+          featured: formFeatured,
         }]);
         if (error) throw error;
         await fetchItems(1);
@@ -353,7 +360,8 @@ export default function AdminGallery() {
                   <TableHead className="w-[40px]">Preview</TableHead>
                   <TableHead className="w-[35%]">Title</TableHead>
                   <TableHead className="w-[12%]">Type</TableHead>
-                  <TableHead className="w-[30%]">Alt Text</TableHead>
+                  <TableHead className="w-[10%]">Featured</TableHead>
+                  <TableHead className="w-[20%]">Alt Text</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -376,6 +384,13 @@ export default function AdminGallery() {
                     </TableCell>
                     <TableCell className="font-semibold text-primary">{item.title}</TableCell>
                     <TableCell><TypeBadge type={item.type} /></TableCell>
+                    <TableCell>
+                      {item.featured && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary">
+                          <Star className="h-3 w-3 fill-current" /> Featured
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground truncate max-w-[180px]">
                       {item.alt_text || '—'}
                     </TableCell>
@@ -427,6 +442,13 @@ export default function AdminGallery() {
                           onMouseEnter={(e) => (e.target as HTMLVideoElement).play()}
                           onMouseLeave={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
                         />
+                      )}
+                      {item.featured && (
+                        <div className="absolute top-2 right-2">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary text-primary-foreground">
+                            <Star className="h-2.5 w-2.5 fill-current" /> Featured
+                          </span>
+                        </div>
                       )}
                     </div>
                     <CardHeader className="p-4 pb-2">
@@ -659,7 +681,6 @@ export default function AdminGallery() {
                 />
               </div>
 
-              {/* Alt text */}
               <div className="space-y-1.5">
                 <Label htmlFor="gal-alt" className="text-xs">Alt Text <span className="text-muted-foreground font-normal">(optional)</span></Label>
                 <Input
@@ -668,6 +689,19 @@ export default function AdminGallery() {
                   placeholder="Short description for SEO/Accessibility"
                   value={formAlt}
                   onChange={(e) => setFormAlt(e.target.value)}
+                />
+              </div>
+
+              {/* Featured toggle */}
+              <div className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-muted/20">
+                <div className="space-y-0.5">
+                  <Label htmlFor="gal-featured" className="text-sm font-medium">Featured Item</Label>
+                  <p className="text-xs text-muted-foreground">Highlight this media on the front page</p>
+                </div>
+                <Switch
+                  id="gal-featured"
+                  checked={formFeatured}
+                  onCheckedChange={setFormFeatured}
                 />
               </div>
 

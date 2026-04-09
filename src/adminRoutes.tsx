@@ -1,6 +1,7 @@
 import AdminLogin from '@/pages/AdminLogin';
 import AdminOverview from '@/pages/admin/AdminOverview';
 import AdminMenuItems from '@/pages/admin/AdminMenuItems';
+import AdminMenuImages from '@/pages/admin/AdminMenuImages';
 import AdminCategories from '@/pages/admin/AdminCategories';
 import AdminGallery from '@/pages/admin/AdminGallery';
 import AdminBlogs from '@/pages/admin/AdminBlogs';
@@ -17,6 +18,7 @@ interface RouteConfig {
 const adminRoutes: RouteConfig[] = [
   { name: 'Admin Dashboard', path: '/dashboard', element: <ProtectedRoute><AdminOverview /></ProtectedRoute> },
   { name: 'Admin Menu Items', path: '/menu', element: <ProtectedRoute><AdminMenuItems /></ProtectedRoute> },
+  { name: 'Admin Menu Images', path: '/menu-images', element: <ProtectedRoute><AdminMenuImages /></ProtectedRoute> },
   { name: 'Admin Categories', path: '/categories', element: <ProtectedRoute><AdminCategories /></ProtectedRoute> },
   { name: 'Admin Gallery', path: '/gallery', element: <ProtectedRoute><AdminGallery /></ProtectedRoute> },
   { name: 'Admin Blogs', path: '/blogs', element: <ProtectedRoute><AdminBlogs /></ProtectedRoute> },
