@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import { SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarHeader, SidebarFooter } from "@/components/ui/sidebar"
-import { Images, LayoutDashboard, Settings, LogOut, Tags, UtensilsCrossed } from 'lucide-react';
+import { Images, LayoutDashboard, Settings, LogOut, Tags, UtensilsCrossed, FileText } from 'lucide-react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -58,6 +58,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                       <Link to="/gallery">
                         <Images className="w-5 h-5"/>
                         <span>Gallery</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={activePath === '/blogs'} className="gap-3 font-medium text-[15px] py-6">
+                      <Link to="/blogs">
+                        <FileText className="w-5 h-5"/>
+                        <span>Blog Posts</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
