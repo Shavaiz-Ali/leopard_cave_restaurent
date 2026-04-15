@@ -1,15 +1,60 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Mountain, Utensils, MapPin, Heart, Clock, Wifi, ParkingCircle, Users, ChefHat, Sparkles, Leaf, Star, Facebook, Instagram, Volume2, VolumeX } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Mountain, Utensils, MapPin, Heart, Clock, ChefHat, Leaf, Star, Facebook, Instagram, Volume2, VolumeX, Calendar, User } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
 import SEO from '@/components/common/SEO';
+import { supabase } from '@/utils/supabase';
+import type { Blog } from '@/types/types';
+
+interface MenuImage {
+  id: string;
+  title: string;
+  url: string;
+  sort_order: number;
+}
+interface GalleryItem {
+  id: string;
+  type: 'image' | 'video';
+  url: string;
+  title: string;
+  alt_text: string | null;
+  description: string | null;
+  storage_path: string | null;
+  featured: boolean;
+  created_at: string;
+}
+
+const getYouTubeEmbedUrl = (url: string): string | null => {
+  if (!url) return null;
+  const patterns = [
+    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?(?:.*&)?v=([a-zA-Z0-9_-]{11})/,
+    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/v\/([a-zA-Z0-9_-]{11})/,
+    /(?:https?:\/\/)?youtu\.be\/([a-zA-Z0-9_-]{11})/,
+    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match && match[1]) {
+      return `https://www.youtube.com/embed/${match[1]}`;
+    }
+  }
+  return null;
+};
 
 export default function Home() {
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const featuredVideoRef = useRef<HTMLVideoElement | null>(null);
   const [isMuted, setIsMuted] = useState(true);
+
+  // DB States
+  const [dbGalleryItems, setDbGalleryItems] = useState<GalleryItem[]>([]);
+  const [dbBlogs, setDbBlogs] = useState<Blog[]>([]);
+  const [dbMenuImages, setDbMenuImages] = useState<MenuImage[]>([]);
+  const [galleryLoading, setGalleryLoading] = useState(true);
 
   const handleVideoPlay = (index: number) => {
     videoRefs.current.forEach((video, i) => {
@@ -33,27 +78,17 @@ export default function Home() {
     if (!featuredVideo) return;
 
     let hasInteracted = false;
-    let unmuteAttempted = false;
 
-    // Aggressive unmute function for mobile
-    const forceUnmute = () => {
-      if (featuredVideo && !unmuteAttempted) {
-        unmuteAttempted = true;
-        featuredVideo.muted = false;
-        setIsMuted(false);
-        console.log('Force unmuting video on mobile');
-      }
-    };
-
-    // Listen for ANY user interaction to enable sound
     const handleInteraction = () => {
       if (!hasInteracted) {
         hasInteracted = true;
-        forceUnmute();
+        if (featuredVideo) {
+          featuredVideo.muted = false;
+          setIsMuted(false);
+        }
       }
     };
 
-    // Add multiple interaction listeners for mobile
     window.addEventListener('scroll', handleInteraction, { passive: true });
     window.addEventListener('touchstart', handleInteraction, { passive: true });
     window.addEventListener('touchmove', handleInteraction, { passive: true });
@@ -63,12 +98,9 @@ export default function Home() {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            // Video is in view - try to play with sound
             featuredVideo.muted = false;
             setIsMuted(false);
-            featuredVideo.play().catch((error) => {
-              // If autoplay with sound fails, play muted and wait for interaction
-              console.log('Autoplay with sound blocked, playing muted:', error);
+            featuredVideo.play().catch(() => {
               featuredVideo.muted = true;
               setIsMuted(true);
               featuredVideo.play().catch(() => {
@@ -76,14 +108,13 @@ export default function Home() {
               });
             });
           } else {
-            // Video is out of view, pause it
             if (!featuredVideo.paused) {
               featuredVideo.pause();
             }
           }
         });
       },
-      { threshold: 0.3 } // Trigger when 30% of video is visible
+      { threshold: 0.3 }
     );
 
     observer.observe(featuredVideo);
@@ -97,7 +128,7 @@ export default function Home() {
     };
   }, []);
 
-  // Intersection Observer for all videos (mobile + desktop)
+  // Intersection Observer for all videos
   useEffect(() => {
     const observers: IntersectionObserver[] = [];
 
@@ -107,20 +138,12 @@ export default function Home() {
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              // Video is in view - do nothing (let user control play)
-            } else {
-              // Video is out of view - auto pause
-              if (!video.paused) {
-                video.pause();
-              }
+            if (!entry.isIntersecting && !video.paused) {
+              video.pause();
             }
           });
         },
-        { 
-          threshold: 0.25, // Trigger when 25% of video is visible
-          rootMargin: '0px' // No margin
-        }
+        { threshold: 0.25 }
       );
 
       observer.observe(video);
@@ -130,147 +153,136 @@ export default function Home() {
     return () => {
       observers.forEach(observer => observer.disconnect());
     };
+  }, [dbGalleryItems]);
+
+  // Fetch API Data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [galleryRes, blogsRes, menusRes] = await Promise.all([
+          supabase.from('gallery').select('*').order('created_at', { ascending: false }),
+          supabase.from('blogs').select('*').eq('status', 'Active').order('featured', { ascending: false }).order('created_at', { ascending: false }).limit(3),
+          supabase.from('menu_images').select('id, title, url, sort_order').order('sort_order', { ascending: true }).order('created_at', { ascending: false })
+        ]);
+
+        if (galleryRes.data) setDbGalleryItems(galleryRes.data);
+        if (blogsRes.data) setDbBlogs(blogsRes.data);
+        if (menusRes.data) setDbMenuImages(menusRes.data);
+      } catch (error) {
+        console.error('Error fetching data for landing page:', error);
+      } finally {
+        setGalleryLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const highlights = [
-    { 
-      icon: <Mountain className="h-8 w-8 text-white" />, 
-      title: 'Panoramic Views', 
+    {
+      icon: <Mountain className="h-8 w-8 text-white" />,
+      title: 'Panoramic Views',
       description: 'Stunning 360-degree views of the vibrant blue Attabad Lake.',
       backgroundImage: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alrz5b3t962o.png'
     },
-    { 
-      icon: <Utensils className="h-8 w-8 text-white" />, 
-      title: 'Unique Ambiance', 
+    {
+      icon: <Utensils className="h-8 w-8 text-white" />,
+      title: 'Unique Ambiance',
       description: 'Experience dining in a cozy, cave-inspired wooden interior.',
       backgroundImage: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-als6qwq3iwhs.jpeg'
     },
-    { 
-      icon: <Clock className="h-8 w-8 text-white" />, 
-      title: 'Lunch & Dinner', 
+    {
+      icon: <Clock className="h-8 w-8 text-white" />,
+      title: 'Lunch & Dinner',
       description: 'Open daily for flavorful lunch and unforgettable dinner experiences.',
       backgroundImage: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alt9l5yl2qkg.jpeg'
     },
-    { 
-      icon: <Heart className="h-8 w-8 text-white" />, 
-      title: 'Family Friendly', 
+    {
+      icon: <Heart className="h-8 w-8 text-white" />,
+      title: 'Family Friendly',
       description: 'A peaceful environment ideal for families, couples, and tourists.',
       backgroundImage: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alskgm8i562o.jpeg'
     },
-    { 
-      icon: <ChefHat className="h-8 w-8 text-white" />, 
-      title: 'Delicious Cuisine', 
+    {
+      icon: <ChefHat className="h-8 w-8 text-white" />,
+      title: 'Delicious Cuisine',
       description: 'Authentic local and international dishes prepared with fresh ingredients.',
       backgroundImage: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alt9l5yl1uyo.jpeg'
     },
-    { 
-      icon: <Leaf className="h-8 w-8 text-white" />, 
-      title: 'Natural Setting', 
+    {
+      icon: <Leaf className="h-8 w-8 text-white" />,
+      title: 'Natural Setting',
       description: 'Surrounded by breathtaking mountains and pristine natural beauty.',
       backgroundImage: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alrz5b3t9ce8.png'
     },
   ];
 
   const facilities = [
-    { 
+    {
       icon: (
         <svg className="h-10 w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
         </svg>
-      ), 
-      title: 'Baskochi Track Access', 
-      description: 'Direct access to the scenic Baskochi Track route leading to the beautiful Baskochi Meadows.', 
+      ),
+      title: 'Baskochi Track Access',
+      description: 'Direct access to the scenic Baskochi Track route leading to the beautiful Baskochi Meadows.',
       featured: true,
       backgroundImage: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alt7c1sucni8.jpeg'
     },
-    { 
+    {
       icon: (
         <svg className="h-10 w-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
         </svg>
-      ), 
-      title: 'Free Wi-Fi', 
-      description: 'Stay connected with complimentary high-speed internet access throughout the restaurant.' 
+      ),
+      title: 'Free Wi-Fi',
+      description: 'Stay connected with complimentary high-speed internet access throughout the restaurant.'
     },
-    { 
+    {
       icon: (
         <svg className="h-10 w-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
         </svg>
-      ), 
-      title: 'Free Parking', 
-      description: 'Ample secure parking space available for all our guests and visitors.' 
+      ),
+      title: 'Free Parking',
+      description: 'Ample secure parking space available for all our guests and visitors.'
     },
-    { 
+    {
       icon: (
         <svg className="h-10 w-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
-      ), 
-      title: 'Family-Friendly Area', 
-      description: 'Dedicated comfortable spaces designed for families with children of all ages.' 
+      ),
+      title: 'Family-Friendly Area',
+      description: 'Dedicated comfortable spaces designed for families with children of all ages.'
     },
-    { 
+    {
       icon: (
         <svg className="h-10 w-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
         </svg>
-      ), 
-      title: 'Top-Quality Service', 
-      description: 'Exceptional food service with premium fresh ingredients and expert preparation.' 
+      ),
+      title: 'Top-Quality Service',
+      description: 'Exceptional food service with premium fresh ingredients and expert preparation.'
     },
-    { 
+    {
       icon: (
         <svg className="h-10 w-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
         </svg>
-      ), 
-      title: 'Excellent Cleanliness', 
-      description: 'Maintained to the highest standards of hygiene, sanitation, and safety protocols.' 
+      ),
+      title: 'Excellent Cleanliness',
+      description: 'Maintained to the highest standards of hygiene, sanitation, and safety protocols.'
     },
-    { 
+    {
       icon: (
         <svg className="h-10 w-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-      ), 
-      title: 'Eco-Friendly Design', 
-      description: 'Natural, sustainable architecture harmoniously blending with the mountain environment.' 
+      ),
+      title: 'Eco-Friendly Design',
+      description: 'Natural, sustainable architecture harmoniously blending with the mountain environment.'
     },
-  ];
-
-  const galleryImages = [
-    { id: '1', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alrz5b3t962o.png', alt: 'Stunning mountain view from restaurant' },
-    { id: '2', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alrz5b3t9ce8.png', alt: 'Scenic landscape and dining area' },
-    { id: '3', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alrz4vbkcq9s.png', alt: 'Beautiful restaurant ambiance' },
-    { id: '4', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260329/file-akxqj3o5lnnk.png', alt: 'Rustic cave dining with stunning views' },
-    { id: '5', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260329/file-akxqj3o5mj9c.png', alt: 'Rustic hillside restaurant at sunset' },
-    { id: '6', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260329/file-akxcbezm1x4w.jpeg', alt: 'Restaurant exterior view' },
-    { id: '7', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260329/file-akxcbezm29s0.jpeg', alt: 'Scenic mountain backdrop' },
-    { id: '8', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260329/file-akxcbezm1e68.jpeg', alt: 'Restaurant entrance and surroundings' },
-    { id: '9', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-als6qwq3iwhs.jpeg', alt: 'Restaurant interior dining area' },
-    { id: '10', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-als6qgxumtc0.jpeg', alt: 'Cozy seating arrangement' },
-    { id: '11', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-als6qwq3idj4.jpeg', alt: 'Panoramic lake view from restaurant' },
-    { id: '12', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-als6qwq3j2te.jpeg', alt: 'Outdoor seating with mountain views' },
-    { id: '13', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alskgm8i562o.jpeg', alt: 'Restaurant dining space' },
-    { id: '14', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alskgm8i4n40.jpeg', alt: 'Beautiful interior setup' },
-    { id: '15', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alskgm8i5ips.jpeg', alt: 'Cozy dining atmosphere' },
-    { id: '16', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alskgm8i4agw.jpeg', alt: 'Restaurant seating area' },
-    { id: '17', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alskgm8i5ce8.jpeg', alt: 'Welcoming restaurant interior' },
-    { id: '18', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alsqut6b73eo.jpeg', alt: 'Restaurant dining experience' },
-    { id: '19', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alsqude2b6kg.jpeg', alt: 'Elegant restaurant setting' },
-    { id: '20', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alsqude2anls.jpeg', alt: 'Comfortable dining area' },
-    { id: '21', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alsqut6b7mdc.jpeg', alt: 'Inviting restaurant atmosphere' },
-    { id: '22', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alsqude2bcw0.jpeg', alt: 'Charming restaurant interior' },
-    { id: '23', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alsxg0o2o7wg.jpeg', alt: 'Restaurant ambiance and decor' },
-    { id: '24', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alsxg0o2pg5c.jpeg', alt: 'Dining area with natural light' },
-    { id: '25', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alsxg0o2okjk.jpeg', alt: 'Cozy restaurant corner' },
-    { id: '26', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alsxg0o2p9ts.jpeg', alt: 'Spacious dining hall' },
-    { id: '27', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alsxf53kvcao.jpeg', alt: 'Warm restaurant interior' },
-    { id: '28', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alt9l5yl2qkg.jpeg', alt: 'Restaurant dining setup' },
-    { id: '29', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alt9l5yl1uyo.jpeg', alt: 'Elegant table arrangement' },
-    { id: '30', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alt9l5yl27ls.jpeg', alt: 'Cozy dining corner' },
-    { id: '31', src: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alt9l5yl2ww0.jpeg', alt: 'Beautiful restaurant interior' },
   ];
 
   const reviews = [
@@ -297,508 +309,557 @@ export default function Home() {
   const [showText, setShowText] = useState(false);
 
   useEffect(() => {
-    // Show content after 2 seconds
     const contentTimer = setTimeout(() => {
       setShowContent(true);
       setShowText(true);
     }, 2000);
-
     return () => clearTimeout(contentTimer);
   }, []);
 
   useEffect(() => {
-    // Hide text after 4 seconds of being visible
     if (showText) {
       const textTimer = setTimeout(() => {
         setShowText(false);
       }, 4000);
-
       return () => clearTimeout(textTimer);
     }
   }, [showText]);
 
   useEffect(() => {
-    // Start slideshow after content appears
     if (showContent) {
-      // Immediately switch to second image when content appears
       setCurrentImageIndex(1);
-      
       const interval = setInterval(() => {
         setCurrentImageIndex((prevIndex) => {
-          // Cycle through all images except the logo (index 0)
           const nextIndex = prevIndex + 1;
           return nextIndex >= heroImages.length ? 1 : nextIndex;
         });
-      }, 2000); // Changed to 2 seconds for smooth balanced transitions
-
+      }, 2000);
       return () => clearInterval(interval);
     }
   }, [showContent, heroImages.length]);
 
+  const mergedGalleryImages = dbGalleryItems
+    .filter(i => i.type === 'image')
+    .map(i => ({ id: i.id, src: i.url, alt: i.alt_text || i.title, title: i.title, description: i.description }));
+
+  const mergedGalleryVideos = dbGalleryItems.filter(i => i.type === 'video');
+  const customFeaturedVideo = mergedGalleryVideos.find(i => i.featured) || mergedGalleryVideos[0] || null;
+  const displayReels = mergedGalleryVideos.filter(v => v.url !== customFeaturedVideo?.url).slice(0, 4);
+
+  // Determine if featured video is YouTube
+  const featuredEmbedUrl = customFeaturedVideo ? getYouTubeEmbedUrl(customFeaturedVideo.url) : null;
+
   return (
     <>
-      <SEO 
+      <SEO
         title="Leopard Cave Restaurant | Best Restaurant in Hunza & Attabad Lake"
         description="Discover Leopard Cave Restaurant – one of the best restaurants in Hunza near Attabad Lake. Enjoy local Hunza food, Pakistani & international dishes with a beautiful natural view."
         keywords="best restaurants in Hunza, best food in Hunza, best food in Hunza Valley, best places to eat in Hunza, best restaurant in Karimabad Hunza, restaurants at Attabad Lake, Hunza food, local food in Hunza, best places in Hunza, where to eat in Hunza, Hunza traditional food, restaurants in Gilgit Baltistan, best restaurants in Gilgit Baltistan"
       />
       <div className="flex flex-col w-full relative">
-      {/* Social Media Icons - Fixed Bottom Right Corner */}
-      <div className="fixed bottom-8 right-8 z-40 flex flex-col gap-4">
-        <a
-          href="https://www.facebook.com/profile.php?id=61582236326778"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="p-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-2xl hover:scale-110 transition-all duration-300 hover:shadow-primary/50"
-          aria-label="Visit our Facebook page"
-        >
-          <Facebook className="h-6 w-6" />
-        </a>
-        <a
-          href="https://www.instagram.com/leopard.cave.restaurant?igsh=MXZ0eWtsN3NoMW1zaQ=="
-          target="_blank"
-          rel="noopener noreferrer"
-          className="p-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-2xl hover:scale-110 transition-all duration-300 hover:shadow-primary/50"
-          aria-label="Visit our Instagram page"
-        >
-          <Instagram className="h-6 w-6" />
-        </a>
-        <a
-          href="https://www.tiktok.com/@leopard.cave.restaurant?_r=1&_t=ZS-954evnj7xI8"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="p-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-2xl hover:scale-110 transition-all duration-300 hover:shadow-primary/50"
-          aria-label="Visit our TikTok page"
-        >
-          <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
-          </svg>
-        </a>
-      </div>
+        {/* Social Media Icons - Fixed Bottom Right Corner */}
+        <div className="fixed bottom-8 right-8 z-40 flex flex-col gap-4">
+          <a
+            href="https://www.facebook.com/profile.php?id=61582236326778"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-2xl hover:scale-110 transition-all duration-300 hover:shadow-primary/50"
+            aria-label="Visit our Facebook page"
+          >
+            <Facebook className="h-6 w-6" />
+          </a>
+          <a
+            href="https://www.instagram.com/leopard.cave.restaurant?igsh=MXZ0eWtsN3NoMW1zaQ=="
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-2xl hover:scale-110 transition-all duration-300 hover:shadow-primary/50"
+            aria-label="Visit our Instagram page"
+          >
+            <Instagram className="h-6 w-6" />
+          </a>
+          <a
+            href="https://www.tiktok.com/@leopard.cave.restaurant?_r=1&_t=ZS-954evnj7xI8"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-2xl hover:scale-110 transition-all duration-300 hover:shadow-primary/50"
+            aria-label="Visit our TikTok page"
+          >
+            <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
+            </svg>
+          </a>
+        </div>
 
-      {/* Hero Section - Full Screen with Navigation Overlay */}
-      <section className="relative h-screen w-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: currentImageIndex === 0 ? '#000000' : '#1a1a1a' }}>
-        {heroImages.map((image, index) => (
-          <img
-            key={index}
-            src={image}
-            alt={`Leopard Cave Restaurant view ${index + 1}`}
-            className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-1000 ${
-              index === currentImageIndex ? 'opacity-100' : 'opacity-0'
-            }`}
-          />
-        ))}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/50 z-10" />
-        
-        {/* Center Text Section - Fades out after 4 seconds - Absolutely positioned for perfect centering */}
-        {showContent && showText && (
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 w-full px-4">
-            <div className={`text-center space-y-3 md:space-y-4 max-w-4xl mx-auto transition-opacity duration-1000 ${showText ? 'opacity-100 animate-fade-in' : 'opacity-0'}`}>
-              <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-amber-400 tracking-tight drop-shadow-2xl leading-tight px-4">
-                Welcome to Leopard Cave Restaurant
-              </h1>
-              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-cyan-100 font-medium drop-shadow-xl max-w-3xl mx-auto leading-relaxed px-6">
-                Enjoy delicious local and international cuisine with a breathtaking view of Attabad Lake
+        {/* Hero Section */}
+        <section className="relative h-screen w-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: currentImageIndex === 0 ? '#000000' : '#1a1a1a' }}>
+          {heroImages.map((image, index) => (
+            <img
+              key={index}
+              src={image}
+              alt={`Leopard Cave Restaurant view ${index + 1}`}
+              className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-1000 ${index === currentImageIndex ? 'opacity-100' : 'opacity-0'}`}
+            />
+          ))}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/50 z-10" />
+
+          {showContent && showText && (
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 w-full px-4">
+              <div className={`text-center space-y-3 md:space-y-4 max-w-4xl mx-auto transition-opacity duration-1000 ${showText ? 'opacity-100 animate-fade-in' : 'opacity-0'}`}>
+                <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-amber-400 tracking-tight drop-shadow-2xl leading-tight px-4">
+                  Welcome to Leopard Cave Restaurant
+                </h1>
+                <p className="text-sm sm:text-base md:text-lg lg:text-xl text-cyan-100 font-medium drop-shadow-xl max-w-3xl mx-auto leading-relaxed px-6">
+                  Enjoy delicious local and international cuisine with a breathtaking view of Attabad Lake
+                </p>
+              </div>
+            </div>
+          )}
+
+          {showContent && (
+            <div className="absolute bottom-6 md:bottom-8 left-0 right-0 z-20 flex flex-col sm:flex-row gap-4 items-center justify-center px-4 animate-fade-in">
+              <Button size="lg" asChild className="rounded-full text-base md:text-lg px-8 md:px-10 py-5 md:py-6 font-bold shadow-2xl hover:scale-105 hover:bg-white/10 hover:shadow-primary/50 hover:border-2 hover:border-white transition-all duration-300 bg-primary border-2 border-transparent backdrop-blur-sm">
+                <Link to="/menu" className="hover:text-white">Menu</Link>
+              </Button>
+              <Button size="lg" asChild className="rounded-full text-base md:text-lg px-8 md:px-10 py-5 md:py-6 font-bold shadow-2xl hover:scale-105 hover:bg-white/10 hover:shadow-primary/50 hover:border-2 hover:border-white transition-all duration-300 bg-primary border-2 border-transparent backdrop-blur-sm">
+                <Link to="/reservation" target="_blank" rel="noopener noreferrer" className="hover:text-white">Reserve Table</Link>
+              </Button>
+            </div>
+          )}
+        </section>
+
+        {/* Menu Section */}
+        <section className="py-20 bg-background">
+          <div className="container px-4 md:px-8 max-w-7xl mx-auto">
+            <div className="text-center space-y-3 mb-12">
+              <h2 className="text-2xl md:text-4xl font-bold text-primary">Discover Our Menu</h2>
+              <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+                Savor authentic local dishes and international cuisine, prepared with the finest ingredients
               </p>
             </div>
-          </div>
-        )}
-        
-        {/* Bottom Buttons Section - Always visible */}
-        {showContent && (
-          <div className="absolute bottom-6 md:bottom-8 left-0 right-0 z-20 flex flex-col sm:flex-row gap-4 items-center justify-center px-4 animate-fade-in">
-            <Button size="lg" asChild className="rounded-full text-base md:text-lg px-8 md:px-10 py-5 md:py-6 font-bold shadow-2xl hover:scale-105 hover:bg-white/10 hover:shadow-primary/50 hover:border-2 hover:border-white transition-all duration-300 bg-primary border-2 border-transparent backdrop-blur-sm">
-              <Link to="/menu" className="hover:text-white">Menu</Link>
-            </Button>
-            <Button size="lg" asChild className="rounded-full text-base md:text-lg px-8 md:px-10 py-5 md:py-6 font-bold shadow-2xl hover:scale-105 hover:bg-white/10 hover:shadow-primary/50 hover:border-2 hover:border-white transition-all duration-300 bg-primary border-2 border-transparent backdrop-blur-sm">
-              <Link to="/reservation" target="_blank" rel="noopener noreferrer" className="hover:text-white">Reserve Table</Link>
-            </Button>
-          </div>
-        )}
-      </section>
-
-      {/* Gallery Section */}
-      <section className="py-20 bg-background">
-        <div className="container px-4 md:px-8 max-w-7xl mx-auto">
-          <div className="text-center space-y-3 mb-12">
-            <h2 className="text-2xl md:text-4xl font-bold text-primary">Explore Our Beautiful Space</h2>
-            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-              Discover the stunning views, cozy interiors, and delicious cuisine that make Leopard Cave Restaurant unforgettable
-            </p>
-          </div>
-
-          {/* Featured Video */}
-          <div className="mb-16">
-            <Card className="overflow-hidden border-none shadow-2xl bg-card max-w-4xl mx-auto">
-              <CardContent className="p-6 md:p-8">
-                <div className="space-y-4 mb-6">
-                  <h2 className="text-2xl md:text-3xl font-bold text-primary text-center">Welcome to Leopard Cave Restaurant</h2>
-                  <p className="text-base md:text-lg text-muted-foreground text-center leading-relaxed">
-                    A perfect place for families, friends, and groups to relax and enjoy. Experience a peaceful and natural environment with breathtaking surroundings. Our restaurant is designed with a unique, nature-inspired aesthetic, built using natural elements to create a truly authentic and calming atmosphere.
-                  </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {dbMenuImages.slice(0, 3).map((menu) => (
+                <Card key={menu.id} className="overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 bg-card">
+                  <CardContent className="p-0">
+                    <div className="relative aspect-[3/4]">
+                      <img src={menu.url} alt={menu.title} className="w-full h-full object-cover bg-muted" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {dbMenuImages.length === 0 && (
+                <div className="col-span-full text-center py-10 text-muted-foreground border-2 border-dashed rounded-3xl">
+                  Menu is currently being updated.
                 </div>
-                <div className="relative rounded-xl overflow-hidden shadow-xl">
-                  <video 
-                    ref={(el) => { 
-                      videoRefs.current[0] = el; 
-                      featuredVideoRef.current = el;
-                    }}
-                    controls 
-                    controlsList="nodownload"
-                    disablePictureInPicture
-                    onPlay={() => handleVideoPlay(0)}
-                    onContextMenu={(e) => e.preventDefault()}
-                    className="w-full h-auto"
-                    style={{ maxHeight: '500px' }}
-                    muted
-                    playsInline
-                  >
-                    <source src="https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260331/file-ami9gyitjabk.mp4" type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
-                  
-                  {/* Mute/Unmute Button Overlay */}
-                  <button
-                    onClick={toggleMute}
-                    className="absolute top-4 left-4 bg-black/70 backdrop-blur-sm p-3 rounded-full hover:bg-black/90 transition-all z-20 hover:scale-110"
-                    aria-label={isMuted ? "Unmute video" : "Mute video"}
-                  >
-                    {isMuted ? (
-                      <VolumeX className="h-6 w-6 text-white" />
-                    ) : (
-                      <Volume2 className="h-6 w-6 text-white" />
-                    )}
-                  </button>
-                  
-                  {/* Watermark Overlay - Positioned to avoid controls */}
-                  <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-lg pointer-events-none z-10">
-                    <p className="text-white text-sm font-semibold">www.leopardcaverestaurant.com</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Video Reels Preview - Max 4 */}
-          <div className="mb-16">
-            <div className="text-center space-y-3 mb-8">
-              <h3 className="text-xl md:text-2xl font-bold text-primary">More Videos & Reels</h3>
+              )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 bg-card">
-                <CardContent className="p-0 relative">
-                  <div className="relative" style={{ maxHeight: '350px', overflow: 'hidden' }}>
-                    <video 
-                      ref={(el) => { videoRefs.current[1] = el; }}
-                      controls 
-                      controlsList="nodownload"
-                      disablePictureInPicture
-                      onPlay={() => handleVideoPlay(1)}
-                      onContextMenu={(e) => e.preventDefault()}
-                      className="w-full h-auto"
-                      style={{ maxHeight: '350px' }}
-                    >
-                      <source src="https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260331/file-ami98mm4ey2o.mp4" type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </video>
-                  </div>
-                  <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded text-xs pointer-events-none z-10">
-                    <p className="text-white font-semibold">www.leopardcaverestaurant.com</p>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 bg-card">
-                <CardContent className="p-0 relative">
-                  <div className="relative" style={{ maxHeight: '350px', overflow: 'hidden' }}>
-                    <video 
-                      ref={(el) => { videoRefs.current[2] = el; }}
-                      controls 
-                      controlsList="nodownload"
-                      disablePictureInPicture
-                      onPlay={() => handleVideoPlay(2)}
-                      onContextMenu={(e) => e.preventDefault()}
-                      className="w-full h-auto"
-                      style={{ maxHeight: '350px' }}
-                    >
-                      <source src="https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260331/file-ami9atjcwyrk.mp4" type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </video>
-                  </div>
-                  <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded text-xs pointer-events-none z-10">
-                    <p className="text-white font-semibold">www.leopardcaverestaurant.com</p>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 bg-card">
-                <CardContent className="p-0 relative">
-                  <div className="relative" style={{ maxHeight: '350px', overflow: 'hidden' }}>
-                    <video 
-                      ref={(el) => { videoRefs.current[3] = el; }}
-                      controls 
-                      controlsList="nodownload"
-                      disablePictureInPicture
-                      onPlay={() => handleVideoPlay(3)}
-                      onContextMenu={(e) => e.preventDefault()}
-                      className="w-full h-auto"
-                      style={{ maxHeight: '350px' }}
-                    >
-                      <source src="https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260401/file-ao0pk0xvdbsw.mp4" type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </video>
-                  </div>
-                  <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded text-xs pointer-events-none z-10">
-                    <p className="text-white font-semibold">www.leopardcaverestaurant.com</p>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 bg-card">
-                <CardContent className="p-0 relative">
-                  <div className="relative" style={{ maxHeight: '350px', overflow: 'hidden' }}>
-                    <video 
-                      ref={(el) => { videoRefs.current[4] = el; }}
-                      controls 
-                      controlsList="nodownload"
-                      disablePictureInPicture
-                      onPlay={() => handleVideoPlay(4)}
-                      onContextMenu={(e) => e.preventDefault()}
-                      className="w-full h-auto"
-                      style={{ maxHeight: '350px' }}
-                    >
-                      <source src="https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260331/file-ami9b9bltekg.mp4" type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </video>
-                  </div>
-                  <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded text-xs pointer-events-none z-10">
-                    <p className="text-white font-semibold">www.leopardcaverestaurant.com</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            <div className="text-center mt-8">
+            <div className="text-center mt-12">
               <Button size="lg" asChild className="rounded-full text-lg px-10 py-6 font-bold shadow-xl hover:scale-105 hover:bg-secondary hover:shadow-primary/50 transition-all duration-300">
-                <Link to="/videos">View More Videos</Link>
+                <Link to="/menu-images">View Full Menu</Link>
               </Button>
             </div>
           </div>
+        </section>
 
-          {/* Gallery Images */}
-          <div className="text-center space-y-3 mb-8">
-            <h3 className="text-xl md:text-2xl font-bold text-primary">Our Gallery</h3>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {galleryImages.slice(0, 8).map((image) => (
-              <Card key={image.id} className="overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 bg-card group">
-                <CardContent className="p-0 relative">
-                  <div className="relative w-full bg-muted" style={{ paddingBottom: '100%' }}>
-                    <img
-                      src={image.src}
-                      alt={image.alt}
-                      className="absolute inset-0 w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                    <p className="text-white text-xs md:text-sm font-medium leading-tight">{image.alt}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          <div className="text-center mt-12">
-            <Button size="lg" asChild className="rounded-full text-lg px-10 py-6 font-bold shadow-xl hover:scale-105 hover:bg-secondary hover:shadow-primary/50 transition-all duration-300">
-              <Link to="/gallery">View More</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+        {/* Gallery Section */}
+        <section className="py-20 bg-background">
+          <div className="container px-4 md:px-8 max-w-7xl mx-auto">
+            <div className="text-center space-y-3 mb-12">
+              <h2 className="text-2xl md:text-4xl font-bold text-primary">Explore Our Beautiful Space</h2>
+              <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+                Discover the stunning views, cozy interiors, and delicious cuisine that make Leopard Cave Restaurant unforgettable
+              </p>
+            </div>
 
-      {/* Facilities Section */}
-      <section className="py-20 bg-muted/30">
-        <div className="container px-4 md:px-8 max-w-7xl mx-auto">
-          <div className="text-center space-y-3 mb-12">
-            <h2 className="text-2xl md:text-4xl font-bold text-primary">Our Premium Facilities</h2>
-            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-              Experience world-class amenities designed for your comfort and convenience
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {facilities.map((facility, index) => (
-              <Card 
-                key={index} 
-                className={`border-none shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden ${
-                  facility.featured ? 'ring-2 ring-primary' : 'bg-card'
-                }`}
-              >
-                {facility.backgroundImage ? (
-                  <div className="relative h-64">
-                    <img 
-                      src={facility.backgroundImage} 
-                      alt={facility.title}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/40" />
-                    <CardContent className="relative h-full flex flex-col items-center justify-center p-8 text-center space-y-4">
-                      <div className="p-4 rounded-2xl mb-2 bg-white/20 backdrop-blur-sm">
-                        {facility.icon}
-                      </div>
-                      <h3 className="text-xl font-bold text-white drop-shadow-lg">{facility.title}</h3>
-                      <p className="text-white/95 drop-shadow-md">{facility.description}</p>
-                      {facility.featured && (
-                        <span className="inline-block px-4 py-1 bg-primary text-primary-foreground text-xs font-bold rounded-full uppercase">
-                          Featured
-                        </span>
+            {/* Featured Video */}
+            <div className="mb-16">
+              <Card className="overflow-hidden border-none shadow-2xl bg-card max-w-4xl mx-auto">
+                <CardContent className="p-6 md:p-8">
+                  <div className="space-y-4 mb-6">
+                    <h2 className="text-2xl md:text-3xl font-bold text-primary text-center">Welcome to Leopard Cave Restaurant</h2>
+                    <p className="text-base md:text-lg text-muted-foreground text-center leading-relaxed">
+                      A perfect place for families, friends, and groups to relax and enjoy. Experience a peaceful and natural environment with breathtaking surroundings. Our restaurant is designed with a unique, nature-inspired aesthetic, built using natural elements to create a truly authentic and calming atmosphere.
+                    </p>
+                  </div>
+                  {customFeaturedVideo ? (
+                    <div className="relative rounded-xl overflow-hidden shadow-xl">
+                      {featuredEmbedUrl ? (
+                        /* YouTube featured video — use 16:9 aspect ratio wrapper */
+                        <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                          <iframe
+                            src={`${featuredEmbedUrl}?rel=0&modestbranding=1&autoplay=1&mute=1`}
+                            title={customFeaturedVideo.title || 'Featured Video'}
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowFullScreen
+                            loading="lazy"
+                            className="absolute inset-0 w-full h-full"
+                            style={{ border: 0 }}
+                          />
+                        </div>
+                      ) : (
+                        /* MP4 featured video */
+                        <div className="h-64 md:h-80 lg:h-[500px]">
+                          <video
+                            ref={(el) => {
+                              videoRefs.current[0] = el;
+                              featuredVideoRef.current = el;
+                            }}
+                            controls
+                            controlsList="nodownload"
+                            disablePictureInPicture
+                            onPlay={() => handleVideoPlay(0)}
+                            onContextMenu={(e) => e.preventDefault()}
+                            className="w-full h-full"
+                            muted
+                            playsInline
+                          >
+                            <source src={customFeaturedVideo.url} type="video/mp4" />
+                            Your browser does not support the video tag.
+                          </video>
+                          {/* Mute/Unmute Button — only for MP4 */}
+                          <button
+                            onClick={toggleMute}
+                            className="absolute top-4 left-4 bg-black/70 backdrop-blur-sm p-3 rounded-full hover:bg-black/90 transition-all z-20 hover:scale-110"
+                            aria-label={isMuted ? 'Unmute video' : 'Mute video'}
+                          >
+                            {isMuted ? (
+                              <VolumeX className="h-6 w-6 text-white" />
+                            ) : (
+                              <Volume2 className="h-6 w-6 text-white" />
+                            )}
+                          </button>
+                          {/* Watermark */}
+                          <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-lg pointer-events-none z-10">
+                            <p className="text-white text-sm font-semibold">www.leopardcaverestaurant.com</p>
+                          </div>
+                        </div>
                       )}
-                    </CardContent>
-                  </div>
-                ) : (
-                  <CardContent className="flex flex-col items-center p-8 text-center space-y-4 h-64 justify-center">
-                    <div className="p-4 rounded-2xl mb-2 bg-primary/10">
-                      {facility.icon}
                     </div>
-                    <h3 className="text-xl font-bold">{facility.title}</h3>
-                    <p className="text-muted-foreground">{facility.description}</p>
-                  </CardContent>
-                )}
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Intro Section */}
-      <section className="py-20 bg-background container px-4 md:px-8 max-w-7xl mx-auto text-center">
-        <div className="max-w-3xl mx-auto space-y-8">
-          <h2 className="text-3xl md:text-5xl font-bold text-primary">A One-of-a-Kind Experience</h2>
-          <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
-            Leopard Cave Restaurant offers a one-of-a-kind dining experience located above the stunning Attabad Lake.
-            Surrounded by nature, this beautiful space combines cave-inspired architecture, warm wooden interiors,
-            and panoramic views of one of the most scenic lakes in the region.
-          </p>
-        </div>
-      </section>
-
-      {/* Highlights Section */}
-      <section className="py-20 bg-muted/30">
-        <div className="container px-4 md:px-8 max-w-7xl mx-auto">
-          <h2 className="text-3xl md:text-5xl font-bold text-center mb-16 text-primary">Experience Highlights</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {highlights.map((highlight, index) => (
-              <Card key={index} className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden group">
-                {highlight.backgroundImage ? (
-                  <div className="relative h-80">
-                    <img 
-                      src={highlight.backgroundImage} 
-                      alt={highlight.title}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent" />
-                    <CardContent className="relative h-full flex flex-col items-center justify-end p-6 text-center space-y-3">
-                      <div className="p-3 bg-white/20 backdrop-blur-sm rounded-full">
-                        {highlight.icon}
-                      </div>
-                      <h3 className="text-xl font-bold text-white drop-shadow-lg">{highlight.title}</h3>
-                      <p className="text-white/95 drop-shadow-md text-sm leading-relaxed">{highlight.description}</p>
-                    </CardContent>
-                  </div>
-                ) : (
-                  <CardContent className="flex flex-col items-center p-8 text-center space-y-4 bg-card h-80 justify-center">
-                    <div className="p-4 bg-primary/10 rounded-2xl mb-2">
-                      {highlight.icon}
+                  ) : (
+                    <div className="text-center py-10 text-muted-foreground border-2 border-dashed rounded-3xl">
+                      Featured video coming soon!
                     </div>
-                    <h3 className="text-xl font-bold">{highlight.title}</h3>
-                    <p className="text-muted-foreground">{highlight.description}</p>
-                  </CardContent>
-                )}
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Location CTA with Embedded Map */}
-      <section className="py-20 container px-4 md:px-8 max-w-7xl mx-auto space-y-12">
-        <div className="text-center space-y-6">
-          <h2 className="text-2xl md:text-4xl font-bold text-primary">Visit Us Today</h2>
-          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-            We are located at the heart of the Hunza valley, offering the best views of Attabad Lake.
-            Come and experience nature like never before.
-          </p>
-        </div>
-        
-        {/* Embedded Google Map */}
-        <div className="w-full rounded-2xl overflow-hidden shadow-2xl border-4 border-primary/10">
-          <iframe
-            width="100%"
-            height="450"
-            frameBorder="0"
-            style={{ border: 0 }}
-            referrerPolicy="no-referrer-when-downgrade"
-            src="https://www.google.com/maps/embed/v1/place?key=AIzaSyB_LJOYJL-84SMuxNB7LtRGhxEQLjswvy0&language=en&region=cn&q=Leopard+Cave+Restaurant+Attabad+Lake+Hunza"
-            allowFullScreen
-            title="Leopard Cave Restaurant Location - Above Attabad Lake, Hunza"
-            className="w-full"
-          />
-        </div>
-
-        <div className="flex flex-col items-center gap-6 mt-8">
-          <div className="text-center space-y-2">
-            <h3 className="text-xl font-bold text-primary">Leopard Cave Restaurant</h3>
-            <p className="text-muted-foreground font-semibold">Karakoram Highway, Above Attabad Lake</p>
-            <p className="text-muted-foreground">Gojal Valley, Hunza, Gilgit-Baltistan, Pakistan</p>
-            <p className="text-muted-foreground font-semibold mt-4">📞 Phone: +92 316 0605535</p>
-            <p className="text-muted-foreground">📧 Email: Leopardcaverestaurantofficial@gmail.com</p>
-            <p className="text-muted-foreground text-sm mt-2">Open Daily: 8:00 AM - 12:00 Midnight</p>
-          </div>
-          <Button variant="link" asChild className="text-primary font-bold text-lg hover:text-secondary transition-colors duration-300">
-            <a 
-              href="https://www.google.com/maps/dir/?api=1&destination=Leopard+Cave+Restaurant+Attabad+Lake+Hunza" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-2"
-            >
-              <MapPin className="h-5 w-5" />
-              Get Directions
-            </a>
-          </Button>
-        </div>
-      </section>
-
-      {/* Customer Reviews Section */}
-      <section className="py-20 bg-muted/30">
-        <div className="container px-4 md:px-8 max-w-7xl mx-auto">
-          <div className="text-center space-y-3 mb-12">
-            <h2 className="text-2xl md:text-4xl font-bold text-primary">What Our Guests Say</h2>
-            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-              Real reviews from our valued customers across Google Maps, Facebook, and social media
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {reviews.map((review) => (
-              <Card key={review.id} className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 bg-card">
-                <CardContent className="p-8 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-bold">{review.name}</h3>
-                      <p className="text-sm text-muted-foreground">{review.platform} • {review.date}</p>
-                    </div>
-                    <div className="flex gap-1">
-                      {[...Array(review.rating)].map((_, i) => (
-                        <Star key={i} className="h-5 w-5 fill-primary text-primary" />
-                      ))}
-                    </div>
-                  </div>
-                  <p className="text-muted-foreground leading-relaxed">{review.text}</p>
+                  )}
                 </CardContent>
               </Card>
-            ))}
+            </div>
+
+            {/* Video Reels Preview */}
+            <div className="mb-16">
+              <div className="text-center space-y-3 mb-8">
+                <h3 className="text-xl md:text-2xl font-bold text-primary">More Videos & Reels</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {displayReels.length > 0 ? displayReels.map((reel, index) => {
+                  const reelEmbedUrl = getYouTubeEmbedUrl(reel.url);
+                  return (
+                    <Card key={reel.id || index} className="overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 bg-card">
+                      <CardContent className="p-0 relative">
+                        <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                          {reelEmbedUrl ? (
+                            <iframe
+                              src={`${reelEmbedUrl}?rel=0&modestbranding=1&enablejsapi=1`}
+                              title={reel.title || `Video ${index + 1}`}
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                              allowFullScreen
+                              loading="lazy"
+                              className="absolute inset-0 w-full h-full"
+                              style={{ border: 0 }}
+                            />
+                          ) : (
+                            <video
+                              ref={(el) => { videoRefs.current[index + 1] = el; }}
+                              controls
+                              controlsList="nodownload"
+                              disablePictureInPicture
+                              onPlay={() => handleVideoPlay(index + 1)}
+                              onContextMenu={(e) => e.preventDefault()}
+                              className="absolute inset-0 w-full h-full object-cover"
+                              playsInline
+                            >
+                              <source src={reel.url} type="video/mp4" />
+                              Your browser does not support the video tag.
+                            </video>
+                          )}
+                        </div>
+                        {!reelEmbedUrl && (
+                          <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded text-xs pointer-events-none z-10">
+                            <p className="text-white font-semibold">www.leopardcaverestaurant.com</p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                }) : (
+                  <div className="col-span-full text-center py-10 text-muted-foreground border-2 border-dashed rounded-3xl">
+                    More videos coming soon!
+                  </div>
+                )}
+              </div>
+              <div className="text-center mt-8">
+                <Button size="lg" asChild className="rounded-full text-lg px-10 py-6 font-bold shadow-xl hover:scale-105 hover:bg-secondary hover:shadow-primary/50 transition-all duration-300">
+                  <Link to="/videos">View More Videos</Link>
+                </Button>
+              </div>
+            </div>
+
+            {/* Gallery Images */}
+            <div className="text-center space-y-3 mb-8">
+              <h3 className="text-xl md:text-2xl font-bold text-primary">Our Gallery</h3>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+              {galleryLoading ? (
+                [...Array(8)].map((_, i) => (
+                  <Card key={i} className="overflow-hidden border-none bg-card">
+                    <CardContent className="p-0">
+                      <div className="relative w-full bg-muted" style={{ paddingBottom: '100%' }}>
+                        <Skeleton className="absolute inset-0 w-full h-full" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : mergedGalleryImages.length > 0 ? mergedGalleryImages.slice(0, 8).map((image) => (
+                <Card key={image.id} className="overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 bg-card group">
+                  <CardContent className="p-0 relative">
+                    <div className="relative w-full bg-muted" style={{ paddingBottom: '100%' }}>
+                      <img
+                        src={image.src}
+                        alt={image.alt}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+                      {image.title && (
+                        <h4 className="text-white text-xs md:text-sm font-bold leading-tight mb-1">{image.title}</h4>
+                      )}
+                      <p className="text-white text-xs md:text-sm font-medium leading-tight">{image.alt}</p>
+                      {image.description && (
+                        <p className="text-white/80 text-xs mt-1 line-clamp-2">{image.description}</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )) : (
+                <div className="col-span-full text-center py-10 text-muted-foreground border-2 border-dashed rounded-3xl">
+                  Gallery images coming soon!
+                </div>
+              )}
+            </div>
+            <div className="text-center mt-12">
+              <Button size="lg" asChild className="rounded-full text-lg px-10 py-6 font-bold shadow-xl hover:scale-105 hover:bg-secondary hover:shadow-primary/50 transition-all duration-300">
+                <Link to="/gallery">View More</Link>
+              </Button>
+            </div>
           </div>
-          <div className="text-center mt-12">
-            <Button size="lg" asChild className="rounded-full text-lg px-10 py-6 font-bold shadow-xl hover:scale-105 hover:bg-secondary hover:shadow-primary/50 transition-all duration-300">
-              <Link to="/reservation" target="_blank" rel="noopener noreferrer">Book Your Experience</Link>
+        </section>
+
+        {/* Facilities Section */}
+        <section className="py-20 bg-muted/30">
+          <div className="container px-4 md:px-8 max-w-7xl mx-auto">
+            <div className="text-center space-y-3 mb-12">
+              <h2 className="text-2xl md:text-4xl font-bold text-primary">Our Premium Facilities</h2>
+              <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+                Experience world-class amenities designed for your comfort and convenience
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {facilities.map((facility, index) => (
+                <Card
+                  key={index}
+                  className={`border-none shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden ${facility.featured ? 'ring-2 ring-primary' : 'bg-card'}`}
+                >
+                  {facility.backgroundImage ? (
+                    <div className="relative h-64">
+                      <img src={facility.backgroundImage} alt={facility.title} className="absolute inset-0 w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/40" />
+                      <CardContent className="relative h-full flex flex-col items-center justify-center p-8 text-center space-y-4">
+                        <div className="p-4 rounded-2xl mb-2 bg-white/20 backdrop-blur-sm">{facility.icon}</div>
+                        <h3 className="text-xl font-bold text-white drop-shadow-lg">{facility.title}</h3>
+                        <p className="text-white/95 drop-shadow-md">{facility.description}</p>
+                        {facility.featured && (
+                          <span className="inline-block px-4 py-1 bg-primary text-primary-foreground text-xs font-bold rounded-full uppercase">Featured</span>
+                        )}
+                      </CardContent>
+                    </div>
+                  ) : (
+                    <CardContent className="flex flex-col items-center p-8 text-center space-y-4 h-64 justify-center">
+                      <div className="p-4 rounded-2xl mb-2 bg-primary/10">{facility.icon}</div>
+                      <h3 className="text-xl font-bold">{facility.title}</h3>
+                      <p className="text-muted-foreground">{facility.description}</p>
+                    </CardContent>
+                  )}
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Intro Section */}
+        <section className="py-20 bg-background container px-4 md:px-8 max-w-7xl mx-auto text-center">
+          <div className="max-w-3xl mx-auto space-y-8">
+            <h2 className="text-3xl md:text-5xl font-bold text-primary">A One-of-a-Kind Experience</h2>
+            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
+              Leopard Cave Restaurant offers a one-of-a-kind dining experience located above the stunning Attabad Lake.
+              Surrounded by nature, this beautiful space combines cave-inspired architecture, warm wooden interiors,
+              and panoramic views of one of the most scenic lakes in the region.
+            </p>
+          </div>
+        </section>
+
+        {/* Highlights Section */}
+        <section className="py-20 bg-muted/30">
+          <div className="container px-4 md:px-8 max-w-7xl mx-auto">
+            <h2 className="text-3xl md:text-5xl font-bold text-center mb-16 text-primary">Experience Highlights</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {highlights.map((highlight, index) => (
+                <Card key={index} className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden group">
+                  {highlight.backgroundImage ? (
+                    <div className="relative h-80">
+                      <img src={highlight.backgroundImage} alt={highlight.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent" />
+                      <CardContent className="relative h-full flex flex-col items-center justify-end p-6 text-center space-y-3">
+                        <div className="p-3 bg-white/20 backdrop-blur-sm rounded-full">{highlight.icon}</div>
+                        <h3 className="text-xl font-bold text-white drop-shadow-lg">{highlight.title}</h3>
+                        <p className="text-white/95 drop-shadow-md text-sm leading-relaxed">{highlight.description}</p>
+                      </CardContent>
+                    </div>
+                  ) : (
+                    <CardContent className="flex flex-col items-center p-8 text-center space-y-4 bg-card h-80 justify-center">
+                      <div className="p-4 bg-primary/10 rounded-2xl mb-2">{highlight.icon}</div>
+                      <h3 className="text-xl font-bold">{highlight.title}</h3>
+                      <p className="text-muted-foreground">{highlight.description}</p>
+                    </CardContent>
+                  )}
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Location CTA with Embedded Map */}
+        <section className="py-20 container px-4 md:px-8 max-w-7xl mx-auto space-y-12">
+          <div className="text-center space-y-6">
+            <h2 className="text-2xl md:text-4xl font-bold text-primary">Visit Us Today</h2>
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+              We are located at the heart of the Hunza valley, offering the best views of Attabad Lake.
+              Come and experience nature like never before.
+            </p>
+          </div>
+          <div className="w-full rounded-2xl overflow-hidden shadow-2xl border-4 border-primary/10">
+            <iframe
+              width="100%"
+              height="450"
+              frameBorder="0"
+              style={{ border: 0 }}
+              referrerPolicy="no-referrer-when-downgrade"
+              src="https://www.google.com/maps/embed/v1/place?key=AIzaSyB_LJOYJL-84SMuxNB7LtRGhxEQLjswvy0&language=en&region=cn&q=Leopard+Cave+Restaurant+Attabad+Lake+Hunza"
+              allowFullScreen
+              title="Leopard Cave Restaurant Location - Above Attabad Lake, Hunza"
+              className="w-full"
+            />
+          </div>
+          <div className="flex flex-col items-center gap-6 mt-8">
+            <div className="text-center space-y-2">
+              <h3 className="text-xl font-bold text-primary">Leopard Cave Restaurant</h3>
+              <p className="text-muted-foreground font-semibold">Karakoram Highway, Above Attabad Lake</p>
+              <p className="text-muted-foreground">Gojal Valley, Hunza, Gilgit-Baltistan, Pakistan</p>
+              <p className="text-muted-foreground font-semibold mt-4">📞 Phone: +92 316 0605535</p>
+              <p className="text-muted-foreground">📧 Email: Leopardcaverestaurantofficial@gmail.com</p>
+              <p className="text-muted-foreground text-sm mt-2">Open Daily: 8:00 AM - 12:00 Midnight</p>
+            </div>
+            <Button variant="link" asChild className="text-primary font-bold text-lg hover:text-secondary transition-colors duration-300">
+              <a href="https://www.google.com/maps/dir/?api=1&destination=Leopard+Cave+Restaurant+Attabad+Lake+Hunza" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                Get Directions
+              </a>
             </Button>
           </div>
-        </div>
-      </section>
-    </div>
+        </section>
+
+        {/* Blogs Section */}
+        <section className="py-20 bg-muted/30">
+          <div className="container px-4 md:px-8 max-w-7xl mx-auto">
+            <div className="text-center space-y-3 mb-12">
+              <h2 className="text-2xl md:text-4xl font-bold text-primary">Latest Stories & Insights</h2>
+              <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+                Read about Hunza's food, history, and culture
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {dbBlogs.length > 0 ? dbBlogs.map((blog) => (
+                <Card key={blog.id} className="border-none shadow-2xl bg-card overflow-hidden group hover:-translate-y-2 transition-all duration-300 rounded-3xl">
+                  <div className="relative h-64 overflow-hidden">
+                    <img src={blog.image} alt={blog.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    {blog.featured && (
+                      <div className="absolute top-4 right-4">
+                        <Badge className="bg-primary text-primary-foreground px-3 py-1 text-xs font-bold flex items-center gap-1">
+                          <Star className="h-3 w-3 fill-current" /> Featured
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                  <CardHeader className="p-6 pb-4">
+                    <CardTitle className="text-2xl font-bold text-primary line-clamp-2">{blog.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-6 pb-6 space-y-4">
+                    <p className="text-muted-foreground leading-relaxed line-clamp-3">{blog.excerpt}</p>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1"><Calendar className="h-4 w-4" /><span>{new Date(blog.created_at).toLocaleDateString()}</span></div>
+                      <div className="flex items-center gap-1"><User className="h-4 w-4" /><span>{blog.author}</span></div>
+                    </div>
+                    <Button asChild className="w-full rounded-full font-bold">
+                      <Link to={`/blog/${blog.slug}`}>Read More</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              )) : (
+                <div className="col-span-full text-center py-10 text-muted-foreground text-lg border-2 border-dashed rounded-3xl bg-card">More stories coming soon!</div>
+              )}
+            </div>
+            <div className="text-center mt-12">
+              <Button size="lg" asChild className="rounded-full text-lg px-10 py-6 font-bold shadow-xl hover:scale-105 hover:bg-secondary hover:shadow-primary/50 transition-all duration-300">
+                <Link to="/blogs">Read All Blogs</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* Customer Reviews Section */}
+        <section className="py-20 bg-muted/30">
+          <div className="container px-4 md:px-8 max-w-7xl mx-auto">
+            <div className="text-center space-y-3 mb-12">
+              <h2 className="text-2xl md:text-4xl font-bold text-primary">What Our Guests Say</h2>
+              <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+                Real reviews from our valued customers across Google Maps, Facebook, and social media
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {reviews.map((review) => (
+                <Card key={review.id} className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 bg-card">
+                  <CardContent className="p-8 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-bold">{review.name}</h3>
+                        <p className="text-sm text-muted-foreground">{review.platform} • {review.date}</p>
+                      </div>
+                      <div className="flex gap-1">
+                        {[...Array(review.rating)].map((_, i) => (
+                          <Star key={i} className="h-5 w-5 fill-primary text-primary" />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-muted-foreground leading-relaxed">{review.text}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            <div className="text-center mt-12">
+              <Button size="lg" asChild className="rounded-full text-lg px-10 py-6 font-bold shadow-xl hover:scale-105 hover:bg-secondary hover:shadow-primary/50 transition-all duration-300">
+                <Link to="/reservation" target="_blank" rel="noopener noreferrer">Book Your Experience</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+      </div>
     </>
   );
 }

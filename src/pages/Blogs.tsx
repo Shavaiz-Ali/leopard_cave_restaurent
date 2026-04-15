@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/utils/supabase';
 import type { Blog } from '@/types/types';
 
-// Legacy static blogs that have dedicated pages — these always show
+// Legacy static blogs - commented out to use DB data only
+/*
 const legacyBlogs = [
   {
     id: 'legacy-1',
@@ -93,6 +94,7 @@ const legacyBlogs = [
     isLegacy: true
   }
 ];
+*/
 
 export default function Blogs() {
   const [dbBlogs, setDbBlogs] = useState<Blog[]>([]);
@@ -119,21 +121,18 @@ export default function Blogs() {
     fetchBlogs();
   }, []);
 
-  // Merge DB blogs on top, then legacy blogs
-  const allBlogs = [
-    ...dbBlogs.map(b => ({
-      id: b.id,
-      title: b.title,
-      excerpt: b.excerpt,
-      date: new Date(b.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-      author: b.author,
-      slug: b.slug,
-      image: b.image,
-      featured: b.featured,
-      isLegacy: false,
-    })),
-    ...legacyBlogs,
-  ];
+  // Use only DB blogs
+  const allBlogs = dbBlogs.map(b => ({
+    id: b.id,
+    title: b.title,
+    excerpt: b.excerpt,
+    date: new Date(b.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+    author: b.author,
+    slug: b.slug,
+    image: b.image,
+    featured: b.featured,
+    isLegacy: false,
+  }));
 
   return (
     <>
@@ -171,7 +170,7 @@ export default function Blogs() {
           <div className="flex justify-center items-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : (
+        ) : allBlogs.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {allBlogs.map((blog) => (
               <Card key={blog.id} className="border-none shadow-2xl bg-card overflow-hidden group hover:-translate-y-2 transition-all duration-300 rounded-3xl">
@@ -215,6 +214,10 @@ export default function Blogs() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        ) : (
+          <div className="text-center py-20 text-muted-foreground text-lg border-2 border-dashed rounded-3xl bg-card/50">
+            No blogs available at the moment. Please check back soon!
           </div>
         )}
       </div>

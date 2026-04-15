@@ -9,7 +9,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CalendarIcon, Clock, Users, Phone, User, Mail, MessageCircle, Utensils, X, Search, Tent, Building2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CalendarIcon, Clock, Users, Phone, User, Mail, MessageCircle, Utensils, X, Search, Tent, Building2, Loader2 } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
@@ -19,65 +20,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
+import { supabase } from '@/utils/supabase';
 
-// Menu items with availability
-const menuItems = [
-  { id: '1', name: 'Burush Shapick', category: 'Local Delights', price: 650, available: true },
-  { id: '2', name: 'Chap Shuroo', category: 'Local Delights', price: 1000, available: true },
-  { id: '3', name: 'Chicken Deroo', category: 'Local Delights', price: 500, available: true },
-  { id: '4', name: 'Dawdo Soup', category: 'Valley Soups', price: 450, available: true },
-  { id: '5', name: 'Hari Soup', category: 'Valley Soups', price: 750, available: true },
-  { id: '6', name: 'Shirijoon Soup', category: 'Valley Soups', price: 2000, available: true },
-  { id: '7', name: 'Hot & Sour', category: 'From the Mountain Pod', price: 500, available: true },
-  { id: '11', name: 'Chicken Corn Soup', category: 'From the Mountain Pod', price: 450, available: true },
-  { id: '8', name: 'Hari Ka Biranze Salad', category: 'Mountain Greens', price: 600, available: true },
-  { id: '9', name: 'Fresh Garden Salad', category: 'Mountain Greens', price: 400, available: true },
-  { id: '10', name: 'Mountain Yak Karahi (1kg)', category: 'Bite Before the Peak', price: 3000, available: true },
-  { id: '10b', name: 'Pasture Mutton Karahi (1kg)', category: 'Bite Before the Peak', price: 3500, available: true },
-  { id: '10c', name: 'Free Range Chicken Karahi (1kg)', category: 'Bite Before the Peak', price: 2700, available: true },
-  { id: '12', name: 'Balling Kham', category: 'Others', price: 3200, available: true },
-  { id: '13', name: 'Chap Za Laksha', category: 'Others', price: 0, available: false },
-  { id: '14', name: 'Chamuse', category: 'Glacier Flow Beverages', price: 500, available: true },
-  { id: '15', name: 'Peak Fruit Fizz', category: 'Glacier Flow Beverages', price: 500, available: true },
-  { id: '16', name: 'Season\'s Essence', category: 'Glacier Flow Beverages', price: 600, available: true },
-  { id: '17', name: 'Lemon Peak Spark', category: 'Glacier Flow Beverages', price: 300, available: true },
-  { id: '18', name: 'Soft Drinks', category: 'Glacier Flow Beverages', price: 150, available: true },
-  { id: '19', name: 'Small Water', category: 'Glacier Flow Beverages', price: 100, available: true },
-  { id: '20', name: 'Large Water', category: 'Glacier Flow Beverages', price: 100, available: true },
-  { id: '21', name: 'Cappuccino', category: 'Peak Warmth', price: 400, available: true },
-  { id: '22', name: 'Americano', category: 'Peak Warmth', price: 300, available: true },
-  { id: '23', name: 'Espresso', category: 'Peak Warmth', price: 300, available: true },
-  { id: '24', name: 'Latte', category: 'Peak Warmth', price: 400, available: true },
-  { id: '25', name: 'Rose Petal Tea', category: 'Peak Warmth', price: 200, available: true },
-  { id: '26', name: 'Mountain Tea', category: 'Peak Warmth', price: 150, available: true },
-  { id: '27', name: 'Honey Tea', category: 'Peak Warmth', price: 250, available: true },
-  { id: '28', name: 'Matka Chai', category: 'Peak Warmth', price: 250, available: true },
-  { id: '29', name: 'Dhood Patti Chai', category: 'Peak Warmth', price: 250, available: true },
-  { id: '30', name: 'Highland Yak Burger', category: 'Highlanders Snacks', price: 1300, available: true },
-  { id: '31', name: 'Zinger Crunch Burger', category: 'Highlanders Snacks', price: 1150, available: true },
-  { id: '32', name: 'Crispy Cluck', category: 'Highlanders Snacks', price: 1450, available: true },
-  { id: '33', name: 'Walnut Dip', category: 'Highlanders Snacks', price: 0, available: false },
-  { id: '34', name: 'Homeland Potato Fries', category: 'Highlanders Snacks', price: 550, available: true },
-  { id: '35', name: 'Homeland Potato Chili Fries', category: 'Highlanders Snacks', price: 750, available: true },
-  { id: '36', name: 'Mountain Yak Chili Dry', category: 'From the Mountain Wok', price: 1300, available: true },
-  { id: '37', name: 'Sweet & Sour Chicken', category: 'From the Mountain Wok', price: 1500, available: true },
-  { id: '38', name: 'Grilled Beef Steak', category: 'Mountain Feast', price: 3000, available: true },
-];
+interface MenuItem {
+  id: string;
+  name: string;
+  category_id: string;
+  price: string;
+  description: string;
+  categories: { name: string } | null;
+}
 
 const formSchema = z.object({
   full_name: z.string().min(2, { message: 'Full name must be at least 2 characters.' }),
@@ -106,31 +61,56 @@ export default function Reservation() {
   const [showDialog, setShowDialog] = useState(false);
   const [formData, setFormData] = useState<z.infer<typeof formSchema> | null>(null);
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedMenuItem, setSelectedMenuItem] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [menuLoading, setMenuLoading] = useState(true);
+
+  // Fetch menu items from database
+  useEffect(() => {
+    const fetchMenuItems = async () => {
+      try {
+        setMenuLoading(true);
+        const { data, error } = await supabase
+          .from('menu_items')
+          .select(`id, name, category_id, price, description, categories (name)`)
+          .order('created_at', { ascending: true });
+        
+        if (error) throw error;
+        setMenuItems((data as MenuItem[]) || []);
+      } catch (err) {
+        console.error('Error fetching menu items:', err);
+        toast.error('Failed to load menu items');
+      } finally {
+        setMenuLoading(false);
+      }
+    };
+    
+    fetchMenuItems();
+  }, []);
 
   // Auto-select item(s) from URL parameter
   useEffect(() => {
     const itemId = searchParams.get('item');
     const itemIds = searchParams.get('items');
     
-    if (itemIds && selectedItems.length === 0) {
+    if (itemIds && selectedItems.length === 0 && menuItems.length > 0) {
       // Handle multiple items
       const ids = itemIds.split(',');
       const itemsToAdd: SelectedItem[] = [];
       
       ids.forEach(id => {
         const menuItem = menuItems.find(item => item.id === id);
-        if (menuItem && menuItem.available) {
+        if (menuItem) {
           const existingItem = itemsToAdd.find(item => item.id === id);
           if (existingItem) {
             existingItem.quantity += 1;
           } else {
+            const price = parseInt(menuItem.price) || 0;
             itemsToAdd.push({
               id: menuItem.id,
               name: menuItem.name,
-              price: menuItem.price,
+              price: price,
               quantity: 1
             });
           }
@@ -143,14 +123,15 @@ export default function Reservation() {
           description: `${itemsToAdd.length} item(s) have been added to your pre-order.`,
         });
       }
-    } else if (itemId && selectedItems.length === 0) {
+    } else if (itemId && selectedItems.length === 0 && menuItems.length > 0) {
       // Handle single item (backward compatibility)
       const menuItem = menuItems.find(item => item.id === itemId);
-      if (menuItem && menuItem.available) {
+      if (menuItem) {
+        const price = parseInt(menuItem.price) || 0;
         setSelectedItems([{
           id: menuItem.id,
           name: menuItem.name,
-          price: menuItem.price,
+          price: price,
           quantity: 1
         }]);
         toast.success('Menu Item Added', {
@@ -158,7 +139,7 @@ export default function Reservation() {
         });
       }
     }
-  }, [searchParams]);
+  }, [searchParams, menuItems]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -178,13 +159,10 @@ export default function Reservation() {
   }, [selectedItems]);
 
   // Add item to selection
-  const addItem = (item: typeof menuItems[0]) => {
-    if (!item.available) {
-      toast.error(`${item.name} is currently unavailable`);
-      return;
-    }
-
+  const addItem = (item: MenuItem) => {
     const existingItem = selectedItems.find(i => i.id === item.id);
+    const price = parseInt(item.price) || 0;
+    
     if (existingItem) {
       setSelectedItems(selectedItems.map(i => 
         i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
@@ -193,7 +171,7 @@ export default function Reservation() {
       setSelectedItems([...selectedItems, { 
         id: item.id, 
         name: item.name, 
-        price: item.price, 
+        price: price, 
         quantity: 1 
       }]);
     }
@@ -216,13 +194,6 @@ export default function Reservation() {
     ));
   };
 
-  // Filtered menu items based on search
-  const filteredItems = useMemo(() => {
-    return menuItems.filter(item => 
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.category.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [searchQuery]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     // Validate food selection
@@ -375,12 +346,12 @@ export default function Reservation() {
 
           {/* Tabs for Restaurant and Resort */}
           <Tabs defaultValue="restaurant" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8">
-              <TabsTrigger value="restaurant" className="text-base md:text-lg font-bold py-3">
+            <TabsList className="grid w-full grid-cols-2 h-auto p-1 bg-muted/50 rounded-2xl border-2 border-primary/20 shadow-lg mb-8">
+              <TabsTrigger value="restaurant" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-base md:text-lg font-bold py-4 px-6 rounded-xl transition-all duration-300 hover:bg-muted/80">
                 <Utensils className="h-5 w-5 mr-2" />
                 Restaurant
               </TabsTrigger>
-              <TabsTrigger value="resort" className="text-base md:text-lg font-bold py-3">
+              <TabsTrigger value="resort" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-base md:text-lg font-bold py-4 px-6 rounded-xl transition-all duration-300 hover:bg-muted/80">
                 <Tent className="h-5 w-5 mr-2" />
                 Resort
               </TabsTrigger>
@@ -506,65 +477,41 @@ export default function Reservation() {
                     </label>
                     <p className="text-sm text-muted-foreground">At least one food item must be selected to proceed with your reservation.</p>
                     
-                    {/* Search and Add Items */}
-                    <Popover open={searchOpen} onOpenChange={setSearchOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          type="button"
-                          className="w-full justify-between h-12 text-lg rounded-xl border-primary/20 hover:border-primary"
-                        >
-                          <span className="flex items-center gap-2">
-                            <Search className="h-4 w-4" />
-                            Search menu items...
-                          </span>
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-full p-0" align="start">
-                        <Command>
-                          <CommandInput 
-                            placeholder="Search menu items..." 
-                            value={searchQuery}
-                            onValueChange={setSearchQuery}
-                          />
-                          <CommandList>
-                            <CommandEmpty>No menu items found.</CommandEmpty>
-                            <CommandGroup>
-                              {filteredItems.map((item) => (
-                                <CommandItem
-                                  key={item.id}
-                                  value={item.name}
-                                  onSelect={() => {
-                                    addItem(item);
-                                    setSearchOpen(false);
-                                    setSearchQuery('');
-                                  }}
-                                  disabled={!item.available}
-                                  className="flex items-center justify-between"
-                                >
-                                  <div className="flex flex-col">
-                                    <span className="font-semibold">{item.name}</span>
-                                    <span className="text-xs text-muted-foreground">{item.category}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    {item.price > 0 && (
-                                      <span className="font-bold text-primary">PKR {item.price}</span>
-                                    )}
-                                    {!item.available && (
-                                      <Badge variant="destructive" className="text-xs">Unavailable</Badge>
-                                    )}
-                                    {item.available && (
-                                      <Badge variant="secondary" className="text-xs">Available</Badge>
-                                    )}
-                                  </div>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                    {/* Loading State */}
+                    {menuLoading ? (
+                      <div className="space-y-3">
+                        <Skeleton className="h-12 w-full rounded-xl" />
+                        <Skeleton className="h-12 w-full rounded-xl" />
+                        <Skeleton className="h-12 w-full rounded-xl" />
+                      </div>
+                    ) : menuItems.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-xl">
+                        No menu items available at the moment.
+                      </div>
+                    ) : (
+                      <>
+                        {/* Select Menu Item */}
+                        <Select value={selectedMenuItem} onValueChange={(value) => {
+                          setSelectedMenuItem(value);
+                          const item = menuItems.find(i => i.id === value);
+                          if (item) {
+                            addItem(item);
+                            setSelectedMenuItem('');
+                          }
+                        }}>
+                          <SelectTrigger className="w-full h-12 text-lg rounded-xl border-primary/20 hover:border-primary">
+                            <SelectValue placeholder="Select a menu item" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {menuItems.map((item) => (
+                              <SelectItem key={item.id} value={item.id}>
+                                {item.name} - PKR {item.price}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </>
+                    )}
 
                     {/* Selected Items */}
                     {selectedItems.length > 0 && (
