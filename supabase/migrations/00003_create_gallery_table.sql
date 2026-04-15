@@ -11,6 +11,9 @@ create table gallery (
   created_at timestamptz default now()
 );
 
+-- Add featured column
+alter table gallery add column if not exists featured boolean not null default false;
+
 -- Enable RLS
 alter table gallery enable row level security;
 

@@ -4,13 +4,18 @@
 <head>
   <meta charset="UTF-8" />
 
-  <!-- ✅ Favicon (Google-friendly) -->
-  <link rel="icon" type="image/png" sizes="48x48" href="/favicon.png" />
-  <link rel="icon" type="image/png" sizes="192x192" href="/favicon.png" />
-  <link rel="shortcut icon" href="/favicon.png" />
+  <!-- ✅ Primary Favicon (Google prefers this) -->
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+
+  <!-- ✅ PNG Favicons -->
+  <link rel="icon" type="image/png" sizes="48x48" href="/icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon.png" />
+
+  <!-- ✅ Shortcut Icon -->
+  <link rel="shortcut icon" href="/icon.png" />
 
   <!-- ✅ Apple Touch Icon -->
-  <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/icon.png" />
 
   <!-- ✅ Viewport -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -25,11 +30,11 @@
   <meta name="keywords"
     content="best restaurants in Hunza, best food in Hunza, Hunza Valley food, restaurants near Attabad Lake, Karimabad restaurants, Hunza local food, Gilgit Baltistan restaurants" />
 
-  <!-- ✅ Open Graph (for sharing preview) -->
+  <!-- ✅ Open Graph -->
   <meta property="og:title" content="Leopard Cave Restaurant | Best Restaurant in Hunza & Attabad Lake" />
   <meta property="og:description"
     content="Enjoy local Hunza food, Pakistani & international dishes with stunning views near Attabad Lake." />
-  <meta property="og:image" content="/favicon.png" />
+  <meta property="og:image" content="/icon.png" />
   <meta property="og:type" content="website" />
 
   <!-- ✅ Title -->
@@ -38,13 +43,15 @@
 
 <body>
   <div id="root"></div>
+
   <script type="module" src="/src/main.tsx"></script>
+
+  <!-- ✅ Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-QD7P5GVDD4"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
-
     gtag('config', 'G-QD7P5GVDD4');
   </script>
 </body>
