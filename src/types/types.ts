@@ -6,6 +6,22 @@ export interface Reservation {
   reservation_time: string;
   guests_count: number;
   special_requests?: string;
+  total_amount?: number;
+  advance_payment?: number;
+  payment_method?: 'jazzcash' | 'easypaisa' | 'crypto';
+  status?: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  advance_payment_status?: 'pending' | 'received';
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ReservationItem {
+  id?: string;
+  reservation_id?: string;
+  menu_item_id: string;
+  menu_item_name: string;
+  price: number;
+  quantity: number;
   created_at?: string;
 }
 
@@ -13,8 +29,9 @@ export interface MenuItem {
   id: string;
   name: string;
   description: string;
-  category: string;
-  price?: number;
+  category_id: string;
+  price?: string;
+  categories?: { name: string } | null;
 }
 
 export interface Attraction {

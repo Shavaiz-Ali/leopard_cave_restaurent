@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Mountain, Utensils, MapPin, Heart, Clock, ChefHat, Leaf, Star, Facebook, Instagram, Volume2, VolumeX, Calendar, User } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Mountain, Utensils, MapPin, Heart, Clock, ChefHat, Leaf, Star, Facebook, Instagram, Volume2, VolumeX, Calendar, User, Phone } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import SEO from '@/components/common/SEO';
 import { supabase } from '@/utils/supabase';
@@ -55,6 +56,11 @@ export default function Home() {
   const [dbBlogs, setDbBlogs] = useState<Blog[]>([]);
   const [dbMenuImages, setDbMenuImages] = useState<MenuImage[]>([]);
   const [galleryLoading, setGalleryLoading] = useState(true);
+  
+  // Reservation Check State
+  const [reservationPhone, setReservationPhone] = useState('');
+  const [checkingReservation, setCheckingReservation] = useState(false);
+  const [reservationError, setReservationError] = useState<string | null>(null);
 
   const handleVideoPlay = (index: number) => {
     videoRefs.current.forEach((video, i) => {
@@ -62,6 +68,14 @@ export default function Home() {
         video.pause();
       }
     });
+  };
+
+  const handleCheckReservation = () => {
+    if (!reservationPhone) {
+      setReservationError('Please enter your phone number');
+      return;
+    }
+    window.location.href = `/reservation-status?phone=${encodeURIComponent(reservationPhone)}`;
   };
 
   const toggleMute = () => {
@@ -425,6 +439,67 @@ export default function Home() {
               </Button>
             </div>
           )}
+        </section>
+
+        {/* Reservation Status Check Section */}
+        <section className="py-20 bg-gradient-to-b from-muted/30 to-background">
+          <div className="container px-4 md:px-8 max-w-4xl mx-auto">
+            <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 bg-card rounded-3xl">
+              <CardHeader className="p-8 pb-4">
+                <div className="flex items-center gap-3">
+                  <Calendar className="h-8 w-8 text-primary" />
+                  <CardTitle className="text-2xl md:text-3xl font-bold text-primary">
+                    Check Your Reservation Status
+                  </CardTitle>
+                </div>
+                <CardDescription className="text-lg text-muted-foreground mt-2">
+                  Enter your phone number to check the status of your reservation
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-8 pt-0 space-y-6">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-1">
+                    <Input
+                      type="tel"
+                      placeholder="+92 3XX XXXXXXX"
+                      value={reservationPhone}
+                      onChange={(e) => {
+                        setReservationPhone(e.target.value);
+                        setReservationError(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleCheckReservation();
+                        }
+                      }}
+                      className="h-14 text-lg rounded-2xl border-primary/20 focus:border-primary"
+                    />
+                  </div>
+                  <Button
+                    size="lg"
+                    className="h-14 text-xl font-bold px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+                    onClick={handleCheckReservation}
+                  >
+                    Check Status
+                  </Button>
+                </div>
+                
+                {reservationError && (
+                  <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-2xl p-6">
+                    <p className="text-red-800 dark:text-red-200 text-lg">{reservationError}</p>
+                  </div>
+                )}
+                
+                <div className="text-center pt-4">
+                  <Button variant="ghost" asChild size="lg">
+                    <Link to="/reservation-status" className="text-lg font-semibold text-primary">
+                      View Full Reservation Status Page
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </section>
 
         {/* Menu Section */}

@@ -10,6 +10,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationNext, Paginati
 import { Progress } from "@/components/ui/progress";
 import { Plus, Trash2, Edit, Image as ImageIcon, Video, LayoutGrid, List as ListIcon, UploadCloud, X, FileImage, FileVideo, Link, Star } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { supabase } from '@/utils/supabase';
 import { toast } from 'sonner';
@@ -21,7 +22,8 @@ interface GalleryItem {
   title: string;
   alt_text: string | null;
   storage_path: string | null;
-  featured: boolean;
+  featured?: boolean;
+  is_carousel?: boolean;
   created_at: string;
 }
 
@@ -53,6 +55,7 @@ export default function AdminGallery() {
   const [formAlt, setFormAlt] = useState('');
   const [formExternalUrl, setFormExternalUrl] = useState('');
   const [formFeatured, setFormFeatured] = useState(false);
+  const [formIsCarousel, setFormIsCarousel] = useState(false);
 
   useEffect(() => {
     fetchItems(1);
@@ -68,7 +71,9 @@ export default function AdminGallery() {
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(from, to);
+
       if (error) throw error;
+      
       if (data) {
         setItems(data);
         if (count !== null) {
@@ -92,6 +97,7 @@ export default function AdminGallery() {
     setFilePreview(null);
     setUploadProgress(0);
     setFormFeatured(false);
+    setFormIsCarousel(false);
     setEditingId(null);
   };
 
@@ -115,6 +121,7 @@ export default function AdminGallery() {
     // If item has no storage_path it came from an external URL
     setFormExternalUrl(item.storage_path ? '' : item.url);
     setFormFeatured(item.featured || false);
+    setFormIsCarousel(item.is_carousel || false);
     setIsDialogOpen(true);
   };
 
@@ -219,7 +226,7 @@ export default function AdminGallery() {
 
         const { data, error } = await supabase
           .from('gallery')
-          .update({ title: formTitle, alt_text: formAlt || null, featured: formFeatured, ...extraFields })
+          .update({ title: formTitle, alt_text: formAlt || null, featured: formFeatured, is_carousel: formIsCarousel, ...extraFields })
           .eq('id', editingId)
           .select()
           .single();
@@ -237,6 +244,7 @@ export default function AdminGallery() {
           title: formTitle,
           alt_text: formAlt || null,
           featured: formFeatured,
+          is_carousel: formIsCarousel,
         }]);
         if (error) throw error;
         await fetchItems(1);
@@ -251,6 +259,7 @@ export default function AdminGallery() {
           title: formTitle,
           alt_text: formAlt || null,
           featured: formFeatured,
+          is_carousel: formIsCarousel,
         }]);
         if (error) throw error;
         await fetchItems(1);
@@ -306,6 +315,18 @@ export default function AdminGallery() {
   const detectedType = selectedFile
     ? (selectedFile.type.startsWith('video/') ? 'video' : 'image')
     : null;
+
+  const getCurrentType = () => {
+    if (editingId) {
+      const item = items.find(i => i.id === editingId);
+      return item?.type || 'image';
+    }
+    if (detectedType) return detectedType;
+    if (formExternalUrl.trim()) {
+      return isVideoUrl(formExternalUrl) ? 'video' : 'image';
+    }
+    return 'image';
+  };
 
   return (
     <AdminLayout>
@@ -704,6 +725,30 @@ export default function AdminGallery() {
                   onCheckedChange={setFormFeatured}
                 />
               </div>
+
+              {/* Carousel Radio Group (only for images) */}
+              {getCurrentType() === 'image' && (
+                <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
+                  <div className="space-y-0.5 mb-3">
+                    <Label className="text-sm font-medium">Carousel Item</Label>
+                    <p className="text-xs text-muted-foreground">Show this image in the homepage carousel</p>
+                  </div>
+                  <RadioGroup
+                    value={formIsCarousel ? 'yes' : 'no'}
+                    onValueChange={(val) => setFormIsCarousel(val === 'yes')}
+                    className="flex gap-6"
+                  >
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="no" id="carousel-no" />
+                      <Label htmlFor="carousel-no" className="text-sm cursor-pointer">No</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="yes" id="carousel-yes" />
+                      <Label htmlFor="carousel-yes" className="text-sm cursor-pointer">Yes</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              )}
 
               {/* Upload progress */}
               {isSubmitting && (

@@ -5,6 +5,7 @@ import MenuCards from '@/pages/MenuCards';
 import Gallery from '@/pages/Gallery';
 import Videos from '@/pages/Videos';
 import Reservation from '@/pages/Reservation';
+import ReservationStatus from '@/pages/ReservationStatus';
 import NearbyPlaces from '@/pages/NearbyPlaces';
 import Location from '@/pages/Location';
 import AboutUs from '@/pages/AboutUs';
@@ -36,6 +37,7 @@ const routes: RouteConfig[] = [
   { name: 'Gallery', path: '/gallery', element: <Gallery /> },
   { name: 'Videos', path: '/videos', element: <Videos /> },
   { name: 'Reservation', path: '/reservation', element: <Reservation /> },
+  { name: 'Reservation Status', path: '/reservation-status', element: <ReservationStatus /> },
   { name: 'Nearby Places', path: '/nearby', element: <NearbyPlaces /> },
   { name: 'Location', path: '/location', element: <Location /> },
   { name: 'About Us', path: '/about', element: <AboutUs /> },

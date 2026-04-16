@@ -6,6 +6,7 @@ import AdminCategories from '@/pages/admin/AdminCategories';
 import AdminGallery from '@/pages/admin/AdminGallery';
 import AdminBlogs from '@/pages/admin/AdminBlogs';
 import AdminSettings from '@/pages/admin/AdminSettings';
+import AdminReservations from '@/pages/admin/AdminReservations';
 import { ProtectedRoute } from '@/components/common/ProtectedRoute';
 import type { ReactNode } from 'react';
 
@@ -17,6 +18,7 @@ interface RouteConfig {
 
 const adminRoutes: RouteConfig[] = [
   { name: 'Admin Dashboard', path: '/dashboard', element: <ProtectedRoute><AdminOverview /></ProtectedRoute> },
+  { name: 'Admin Reservations', path: '/reservations', element: <ProtectedRoute><AdminReservations /></ProtectedRoute> },
   { name: 'Admin Menu Items', path: '/menu', element: <ProtectedRoute><AdminMenuItems /></ProtectedRoute> },
   { name: 'Admin Menu Images', path: '/menu-images', element: <ProtectedRoute><AdminMenuImages /></ProtectedRoute> },
   { name: 'Admin Categories', path: '/categories', element: <ProtectedRoute><AdminCategories /></ProtectedRoute> },
