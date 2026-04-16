@@ -29,7 +29,7 @@ interface Category {
   status: string;
 }
 
-const ITEMS_PER_PAGE = 8;
+const ITEMS_PER_PAGE = 25;
 
 export default function AdminMenuItems() {
   const [menuItems, setMenuItems] = useState<any[]>([]);
@@ -105,7 +105,7 @@ export default function AdminMenuItems() {
     }
   };
 
-  const openEditMenu = (item: any) => {
+  const openEditMenu = (item: any) => {``
     setEditingId(item.id);
     setNewItemName(item.name);
     setNewItemCategory(item.category_id);
