@@ -1,9 +1,7 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Camera, Image as ImageIcon, Video } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
+import { Camera, Image as ImageIcon, Video, X } from 'lucide-react';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import SEO from '@/components/common/SEO';
 import BackButton from '@/components/common/BackButton';
 import { supabase } from '@/utils/supabase';
@@ -37,11 +35,12 @@ const getYouTubeEmbedUrl = (url: string): string | null => {
 };
 
 export default function Gallery() {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'images' | 'videos'>('images');
   const [dbImages, setDbImages] = useState<{ id: string; src: string; alt: string; title?: string; description?: string; }[]>([]);
   const [dbVideos, setDbVideos] = useState<{ id: string; src: string; title: string; description?: string; }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState<{ id: string; src: string; alt: string; title?: string; description?: string; } | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<{ id: string; src: string; title: string; description?: string; } | null>(null);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
   useEffect(() => {
@@ -86,40 +85,22 @@ export default function Gallery() {
     fetchGallery();
   }, []);
 
-  const handleVideoPlay = (index: number) => {
-    videoRefs.current.forEach((video, i) => {
-      if (video && i !== index && !video.paused) {
-        video.pause();
-      }
-    });
+  const handleVideoMouseEnter = (index: number) => {
+    const video = videoRefs.current[index];
+    if (video) {
+      video.play().catch(() => {});
+    }
   };
 
-  // Intersection Observer for video auto-pause on scroll
-  useEffect(() => {
-    const observers: IntersectionObserver[] = [];
+  const handleVideoMouseLeave = (index: number) => {
+    const video = videoRefs.current[index];
+    if (video) {
+      video.pause();
+      video.currentTime = 0;
+    }
+  };
 
-    videoRefs.current.forEach((video) => {
-      if (!video) return;
-
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (!entry.isIntersecting && !video.paused) {
-              video.pause();
-            }
-          });
-        },
-        { threshold: 0.25 }
-      );
-
-      observer.observe(video);
-      observers.push(observer);
-    });
-
-    return () => {
-      observers.forEach(observer => observer.disconnect());
-    };
-  }, [activeTab]);
+  const selectedVideoEmbedUrl = selectedVideo ? getYouTubeEmbedUrl(selectedVideo.src) : null;
 
   return (
     <>
@@ -128,210 +109,232 @@ export default function Gallery() {
         description="View stunning photos and videos of the best restaurant in Hunza Valley. See Attabad Lake views, authentic Hunza food, and our unique dining experience in Gilgit Baltistan."
         keywords="best restaurants in Hunza, restaurants at Attabad Lake, Hunza restaurant photos, best places in Hunza, Hunza Valley gallery, best food in Hunza, where to eat in Hunza"
       />
-      <div className="flex flex-col w-full min-h-screen bg-gradient-to-b from-background via-muted/20 to-background">
+      <div className="min-h-screen bg-background">
         {/* Hero Section */}
-        <div className="relative py-20 overflow-hidden">
-          <div className="absolute inset-0 bg-primary/5" />
-          <div className="container px-4 md:px-8 max-w-7xl mx-auto relative z-10">
-            <BackButton />
-            <div className="text-center space-y-4 max-w-4xl mx-auto">
-              <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-3">
+        <section className="py-16 md:py-24 bg-muted/30">
+          <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
+            <div className="mb-6">
+              <BackButton />
+            </div>
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-4">
                 <Camera className="h-6 w-6 text-primary" />
               </div>
-              <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-primary tracking-tight">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-primary mb-3">
                 Gallery
               </h1>
-              <p className="text-base md:text-lg text-muted-foreground font-light leading-relaxed max-w-3xl mx-auto">
+              <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto">
                 Explore our stunning collection of images and videos showcasing the beauty and ambiance of Leopard Cave Restaurant
               </p>
-              <div className="h-1 w-20 bg-primary mx-auto rounded-full" />
+            </div>
 
-              {/* Tab Navigation */}
-              <div className="flex justify-center gap-4 mt-8">
-                <Button
-                  size="lg"
-                  variant={activeTab === 'images' ? 'default' : 'outline'}
-                  onClick={() => setActiveTab('images')}
-                  className="rounded-full text-lg px-8 py-6 font-bold shadow-xl hover:scale-105 transition-all duration-300"
-                >
-                  <ImageIcon className="h-5 w-5 mr-2" />
-                  Images
-                </Button>
-                <Button
-                  size="lg"
-                  variant={activeTab === 'videos' ? 'default' : 'outline'}
-                  onClick={() => setActiveTab('videos')}
-                  className="rounded-full text-lg px-8 py-6 font-bold shadow-xl hover:scale-105 transition-all duration-300"
-                >
-                  <Video className="h-5 w-5 mr-2" />
-                  Videos
-                </Button>
-              </div>
+            {/* Tab Navigation */}
+            <div className="flex justify-center gap-4">
+              <Button
+                variant={activeTab === 'images' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('images')}
+                className="px-6 py-2.5 rounded-lg text-sm font-medium transition-all duration-300"
+              >
+                <ImageIcon className="h-4 w-4 mr-2" />
+                Images
+              </Button>
+              <Button
+                variant={activeTab === 'videos' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('videos')}
+                className="px-6 py-2.5 rounded-lg text-sm font-medium transition-all duration-300"
+              >
+                <Video className="h-4 w-4 mr-2" />
+                Videos
+              </Button>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Images Tab Content */}
         {activeTab === 'images' && (
-          <div className="container px-4 md:px-8 max-w-7xl mx-auto pb-20">
-            {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                {[...Array(6)].map((_, i) => (
-                  <Card key={i} className="overflow-hidden border-none bg-card">
-                    <CardContent className="p-0">
-                      <AspectRatio ratio={4 / 3}>
-                        <Skeleton className="w-full h-full" />
-                      </AspectRatio>
-                      <div className="p-4 space-y-2">
-                        <Skeleton className="h-4 w-3/4" />
-                        <Skeleton className="h-3 w-1/2" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+          <section className="py-16 md:py-24">
+            <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
+              <div className="text-center mb-10">
+                <h2 className="text-2xl md:text-3xl font-semibold text-foreground mb-2">Photos</h2>
+                <p className="text-sm md:text-base text-muted-foreground">Capture the essence of our beautiful space</p>
               </div>
-            ) : dbImages.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                {dbImages.map((image) => (
-                  <Card
-                    key={image.id}
-                    className="overflow-hidden border-none shadow-2xl hover:shadow-primary/20 transition-all duration-500 hover:-translate-y-3 bg-card group cursor-pointer"
-                    onClick={() => setSelectedImage(image.src)}
-                  >
-                    <CardContent className="p-0 relative">
-                      <AspectRatio ratio={4 / 3}>
-                        <img
-                          src={image.src}
-                          alt={image.alt}
-                          className="w-full h-full object-cover bg-muted transition-transform duration-700 group-hover:scale-105"
-                        />
-                      </AspectRatio>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-6">
-                        {image.title && (
-                          <h3 className="text-white text-base md:text-lg font-bold leading-tight drop-shadow-lg mb-2">
-                            {image.title}
-                          </h3>
-                        )}
-                        <p className="text-white text-sm md:text-base font-medium leading-tight drop-shadow-lg">
-                          {image.alt}
-                        </p>
+
+              {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="aspect-[4/5] rounded-xl bg-muted animate-pulse" />
+                  ))}
+                </div>
+              ) : dbImages.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                  {dbImages.map((image) => (
+                    <div
+                      key={image.id}
+                      className="group relative aspect-[4/5] rounded-xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-all duration-300"
+                      onClick={() => setSelectedImage(image)}
+                    >
+                      <img
+                        src={image.src}
+                        alt={image.alt}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+                      <div className="relative h-full flex flex-col justify-end p-5 md:p-6">
+                        <h3 className="text-lg md:text-xl font-medium text-white mb-2">{image.title}</h3>
                         {image.description && (
-                          <p className="text-white/80 text-xs md:text-sm mt-2 line-clamp-2">
-                            {image.description}
-                          </p>
+                          <p className="text-white/85 text-sm leading-relaxed line-clamp-2">{image.description}</p>
                         )}
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-20 text-muted-foreground border-2 border-dashed rounded-3xl bg-card">
-                Images coming soon!
-              </div>
-            )}
-          </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16 text-muted-foreground border border-border rounded-xl">
+                  Images coming soon!
+                </div>
+              )}
+            </div>
+          </section>
         )}
 
         {/* Videos Tab Content */}
         {activeTab === 'videos' && (
-          <div className="container px-4 md:px-8 max-w-7xl mx-auto pb-20">
-            {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {[...Array(6)].map((_, i) => (
-                  <Card key={i} className="overflow-hidden border-none bg-card">
-                    <CardContent className="p-0">
-                      <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-                        <Skeleton className="absolute inset-0 w-full h-full" />
-                      </div>
-                      <div className="p-4 space-y-2">
-                        <Skeleton className="h-5 w-3/4" />
-                        <Skeleton className="h-3 w-1/2" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+          <section className="py-16 md:py-24">
+            <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
+              <div className="text-center mb-10">
+                <h2 className="text-2xl md:text-3xl font-semibold text-foreground mb-2">Videos</h2>
+                <p className="text-sm md:text-base text-muted-foreground">Watch our experience in motion</p>
               </div>
-            ) : dbVideos.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {dbVideos.map((video, index) => {
-                  const embedUrl = getYouTubeEmbedUrl(video.src);
-                  return (
-                    <Card key={video.id} className="overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 bg-card group">
-                      <CardContent className="p-0 relative">
-                        <div className="relative w-full" style={{ paddingBottom: '56.25%' /* 16:9 */ }}>
-                          {embedUrl ? (
-                            <iframe
-                              src={`${embedUrl}?rel=0&modestbranding=1&enablejsapi=1`}
-                              title={video.title}
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                              allowFullScreen
-                              loading="lazy"
-                              className="absolute inset-0 w-full h-full rounded-none"
-                              style={{ border: 0 }}
-                            />
-                          ) : (
-                            <video
-                              ref={(el) => { videoRefs.current[index] = el; }}
-                              controls
-                              controlsList="nodownload"
-                              disablePictureInPicture
-                              onPlay={() => handleVideoPlay(index)}
-                              onContextMenu={(e) => e.preventDefault()}
-                              className="absolute inset-0 w-full h-full object-cover"
-                              playsInline
-                            >
-                              <source src={video.src} type="video/mp4" />
-                              Your browser does not support the video tag.
-                            </video>
-                          )}
-                        </div>
-                        {/* Watermark Overlay — only for non-YouTube videos */}
-                        {!embedUrl && (
-                          <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-sm px-3 py-2 rounded-lg pointer-events-none z-10">
-                            <p className="text-white text-xs font-semibold">www.leopardcaverestaurant.com</p>
-                          </div>
+
+              {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="aspect-[4/5] rounded-xl bg-muted animate-pulse" />
+                  ))}
+                </div>
+              ) : dbVideos.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                  {dbVideos.map((video, index) => {
+                    const embedUrl = getYouTubeEmbedUrl(video.src);
+                    return (
+                      <div
+                        key={video.id}
+                        className="group relative aspect-[4/5] rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer"
+                        onMouseEnter={() => !embedUrl && handleVideoMouseEnter(index)}
+                        onMouseLeave={() => !embedUrl && handleVideoMouseLeave(index)}
+                        onClick={() => setSelectedVideo(video)}
+                      >
+                        {embedUrl ? (
+                          <iframe
+                            src={`${embedUrl}?rel=0&modestbranding=1&mute=1&controls=0&showinfo=0`}
+                            title={video.title}
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowFullScreen
+                            loading="lazy"
+                            className="absolute inset-0 w-full h-full"
+                            style={{ border: 0 }}
+                          />
+                        ) : (
+                          <video
+                            ref={(el) => { videoRefs.current[index] = el; }}
+                            muted
+                            loop
+                            playsInline
+                            disablePictureInPicture
+                            onContextMenu={(e) => e.preventDefault()}
+                            className="absolute inset-0 w-full h-full object-cover"
+                          >
+                            <source src={video.src} type="video/mp4" />
+                            Your browser does not support the video tag.
+                          </video>
                         )}
-                        {/* Video Title */}
-                        <div className="p-4 bg-card">
-                          <h3 className="text-lg font-bold text-primary mb-2">{video.title}</h3>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+                        <div className="relative h-full flex flex-col justify-end p-5 md:p-6">
+                          <h3 className="text-lg md:text-xl font-medium text-white mb-2">{video.title}</h3>
                           {video.description && (
-                            <p className="text-sm text-muted-foreground line-clamp-2">{video.description}</p>
+                            <p className="text-white/85 text-sm leading-relaxed line-clamp-2">{video.description}</p>
                           )}
                         </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-16 text-muted-foreground border border-border rounded-xl">
+                  Videos coming soon!
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+      </div>
+
+      {/* Image Dialog */}
+      <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
+        <DialogContent className="sm:max-w-4xl p-0 overflow-hidden">
+          <DialogTitle className="sr-only">
+            {selectedImage?.title || 'Image'}
+          </DialogTitle>
+          {selectedImage && (
+            <div>
+              <img
+                src={selectedImage.src}
+                alt={selectedImage.alt}
+                className="w-full h-auto max-h-[80vh] object-contain"
+              />
+              <div className="p-6">
+                <h3 className="text-lg font-medium">{selectedImage.title}</h3>
+                {selectedImage.description && (
+                  <p className="mt-1 text-sm text-muted-foreground">{selectedImage.description}</p>
+                )}
               </div>
-            ) : (
-              <div className="text-center py-20 text-muted-foreground border-2 border-dashed rounded-3xl bg-card">
-                Videos coming soon!
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Video Dialog */}
+      <Dialog open={!!selectedVideo} onOpenChange={(open) => !open && setSelectedVideo(null)}>
+        <DialogContent className="sm:max-w-4xl p-0 overflow-hidden">
+          <DialogTitle className="sr-only">
+            {selectedVideo?.title || 'Video'}
+          </DialogTitle>
+          <div className="p-1">
+            {selectedVideo && (
+              <div className="relative">
+                {selectedVideoEmbedUrl ? (
+                  <div className="aspect-video">
+                    <iframe
+                      src={`${selectedVideoEmbedUrl}?rel=0&modestbranding=1&autoplay=1`}
+                      title={selectedVideo.title}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                      className="w-full h-full rounded-lg"
+                      style={{ border: 0 }}
+                    />
+                  </div>
+                ) : (
+                  <div className="aspect-video">
+                    <video
+                      autoPlay
+                      controls
+                      controlsList="nodownload"
+                      disablePictureInPicture
+                      onContextMenu={(e) => e.preventDefault()}
+                      className="w-full h-full rounded-lg"
+                      playsInline
+                    >
+                      <source src={selectedVideo.src} type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                )}
               </div>
             )}
           </div>
-        )}
-
-        {/* Lightbox Modal */}
-        {selectedImage && (
-          <div
-            className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 animate-fade-in"
-            onClick={() => setSelectedImage(null)}
-          >
-            <button
-              className="absolute top-4 right-4 text-white text-4xl hover:text-primary transition-colors"
-              onClick={() => setSelectedImage(null)}
-            >
-              ×
-            </button>
-            <img
-              src={selectedImage}
-              alt="Full size view"
-              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-            />
-          </div>
-        )}
-      </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

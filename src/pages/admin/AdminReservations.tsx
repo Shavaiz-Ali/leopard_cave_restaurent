@@ -38,6 +38,13 @@ export default function AdminReservations() {
   }>({ open: false, reservationId: '', newStatus: 'pending' });
   const [confirmUpdating, setConfirmUpdating] = useState(false);
   
+  // For delete confirm dialog
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    open: boolean;
+    reservationId: string;
+  }>({ open: false, reservationId: '' });
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -116,6 +123,45 @@ export default function AdminReservations() {
 
   const handleConfirmUpdate = () => {
     updateReservationStatus(confirmDialog.reservationId, confirmDialog.newStatus);
+  };
+
+  const confirmDeleteReservation = (reservationId: string) => {
+    setDeleteConfirm({ open: true, reservationId });
+  };
+
+  const deleteReservation = async () => {
+    try {
+      setDeleteLoading(true);
+      
+      // First delete reservation items
+      await supabase
+        .from('reservation_items')
+        .delete()
+        .eq('reservation_id', deleteConfirm.reservationId);
+        
+      // Then delete the reservation itself
+      const { error } = await supabase
+        .from('reservations')
+        .delete()
+        .eq('id', deleteConfirm.reservationId);
+
+      if (error) throw error;
+      
+      // Update the reservations list
+      setReservations(reservations.filter(res => res.id !== deleteConfirm.reservationId));
+      setTotalCount(prev => prev - 1);
+      
+      if (viewingReservation && viewingReservation.id === deleteConfirm.reservationId) {
+        setViewingReservation(null);
+      }
+
+      toast.success('Reservation deleted successfully');
+      setDeleteConfirm({ open: false, reservationId: '' });
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete reservation');
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   const getStatusBadge = (status?: Reservation['status']) => {
@@ -252,6 +298,12 @@ export default function AdminReservations() {
                             <DropdownMenuItem onClick={() => confirmUpdateStatus(reservation.id as string, 'completed')}>
                               Mark as Completed
                             </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => confirmDeleteReservation(reservation.id as string)}
+                              className="text-red-600 focus:text-red-600"
+                            >
+                              Delete Reservation
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -323,6 +375,12 @@ export default function AdminReservations() {
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => confirmUpdateStatus(reservation.id as string, 'completed')}>
                             Mark as Completed
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => confirmDeleteReservation(reservation.id as string)}
+                            className="text-red-600 focus:text-red-600"
+                          >
+                            Delete Reservation
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -479,6 +537,31 @@ export default function AdminReservations() {
                   </>
                 ) : (
                   "Update Status"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteConfirm.open} onOpenChange={(open) => !open && !deleteLoading && setDeleteConfirm({ ...deleteConfirm, open: false })}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Reservation</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this reservation? This action cannot be undone and will also delete all associated order items.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleteLoading}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={deleteReservation} disabled={deleteLoading} className="bg-red-600 hover:bg-red-700 text-red-50 relative">
+                {deleteLoading ? (
+                  <>
+                    <LoaderCircle className="h-4 w-4 mr-2 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete Reservation"
                 )}
               </AlertDialogAction>
             </AlertDialogFooter>

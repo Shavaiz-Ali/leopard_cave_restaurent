@@ -1,15 +1,11 @@
 import BackButton from "@/components/common/BackButton";
 import SEO from "@/components/common/SEO";
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tent, Building2, Calendar, Users, DollarSign } from 'lucide-react';
+import { Tent, Building2, Calendar, Users, DollarSign, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function LeopardCaveResort() {
-  const [showCampingNotice, setShowCampingNotice] = useState(false);
-
   const handleCampingBooking = () => {
     toast.info('Camping Services Temporarily Unavailable', {
       description: 'Currently, camping services are not available due to maintenance. Please contact us on WhatsApp for more information.',
@@ -20,153 +16,161 @@ export default function LeopardCaveResort() {
       },
     });
   };
+
   return (
-    <div className="flex flex-col w-full min-h-screen py-16 bg-background">
-      <div className="container px-4 md:px-8 max-w-7xl mx-auto space-y-16 mt-8">
-        <BackButton />
-        <div className="text-center space-y-4 pt-8">
-          <h1 className="text-4xl md:text-7xl font-extrabold text-primary tracking-tight uppercase">Resort</h1>
-          <p className="text-lg md:text-2xl text-muted-foreground max-w-2xl mx-auto font-medium leading-relaxed">
-            Experience nature, adventure, and comfort at Leopard Cave
-          </p>
-        </div>
-
-        {/* Campaigns Section */}
-        <div className="space-y-8">
-          <div className="text-center space-y-4">
-            <div className="flex justify-center">
-              <div className="p-4 bg-primary/10 rounded-full">
-                <Tent className="h-12 w-12 text-primary" />
-              </div>
+    <>
+      <SEO 
+        title="Resort - Camping & Luxury Stay | Leopard Cave Restaurant"
+        description="Experience camping and upcoming resort facilities at Leopard Cave. Enjoy nature, adventure, and stunning views of Attabad Lake in Hunza Valley."
+        keywords="camping Hunza, resort Hunza, Attabad Lake camping, luxury stay Hunza, Leopard Cave resort"
+      />
+      <div className="min-h-screen bg-background">
+        {/* Hero Section */}
+        <section className="py-12 md:py-16 bg-muted/30">
+          <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
+            <div className="mb-6">
+              <BackButton />
             </div>
-            <h2 className="text-3xl md:text-5xl font-bold text-primary">Camping Adventures</h2>
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Book your camping experience at Leopard Cave and enjoy the natural beauty of Hunza Valley under the stars
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <Card className="border-none shadow-2xl bg-card overflow-hidden rounded-3xl">
-              <div className="relative h-64 overflow-hidden">
-                <img
-                  src="https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alt7c1sucni8.jpeg"
-                  alt="Camping at Leopard Cave"
-                  className="w-full h-full object-cover"
-                />
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-4">
+                <Tent className="h-6 w-6 text-primary" />
               </div>
-              <CardHeader className="p-6">
-                <CardTitle className="text-2xl font-bold text-primary">Camping Packages</CardTitle>
-              </CardHeader>
-              <CardContent className="px-6 pb-6 space-y-4">
-                {/* Pricing Information */}
-                <div className="bg-primary/10 rounded-xl p-4 space-y-2 border-2 border-primary/20">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="h-5 w-5 text-primary" />
-                      <span className="font-bold text-foreground">Price per Tent:</span>
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-primary mb-3">
+                Resort & Camping
+              </h1>
+              <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto">
+                Experience nature, adventure, and comfort at Leopard Cave
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Camping Section */}
+        <section className="py-12 md:py-16">
+          <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
+            <div className="text-center mb-8">
+              <h2 className="text-xl md:text-2xl font-semibold text-foreground mb-2">Camping Adventures</h2>
+              <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
+                Book your camping experience at Leopard Cave and enjoy the natural beauty of Hunza Valley under the stars
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 max-w-5xl mx-auto">
+              {/* Camping Package */}
+              <div className="rounded-xl overflow-hidden border border-border shadow-sm bg-card">
+                <div className="relative aspect-video">
+                  <img
+                    src="https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alt7c1sucni8.jpeg"
+                    alt="Camping at Leopard Cave"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                </div>
+                <div className="p-5 space-y-4">
+                  <h3 className="text-lg font-medium text-foreground">Camping Package</h3>
+                  
+                  <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-medium text-foreground">Price per Tent:</span>
+                      </div>
+                      <span className="text-lg font-semibold text-primary">PKR 3,000</span>
                     </div>
-                    <span className="text-2xl font-extrabold text-primary">PKR 3,000</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-primary" />
-                      <span className="text-muted-foreground">Maximum Capacity:</span>
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-3.5 w-3.5 text-primary" />
+                        <span className="text-muted-foreground">Max Capacity:</span>
+                      </div>
+                      <span className="font-medium text-foreground">3 People</span>
                     </div>
-                    <span className="font-bold text-foreground">3 People per Tent</span>
+                    <div className="text-xs text-muted-foreground text-center pt-2 border-t border-border">
+                      Per night rate
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground text-center pt-2 border-t border-primary/20">
-                    Per night rate
+
+                  <ul className="space-y-1.5 text-xs text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <Check className="h-3.5 w-3.5 text-primary mt-0.5" />
+                      <span>Premium camping tents with bedding</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-3.5 w-3.5 text-primary mt-0.5" />
+                      <span>Bonfire and BBQ facilities</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-3.5 w-3.5 text-primary mt-0.5" />
+                      <span>Guided hiking tours</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-3.5 w-3.5 text-primary mt-0.5" />
+                      <span>Restaurant access</span>
+                    </li>
+                  </ul>
+                  
+                  <Button 
+                    onClick={handleCampingBooking}
+                    className="w-full px-5 py-2.5 rounded-lg text-sm font-medium"
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Book Camping
+                  </Button>
+                </div>
+              </div>
+
+              {/* What to Expect */}
+              <div className="rounded-xl overflow-hidden border border-border shadow-sm">
+                <div className="relative aspect-video">
+                  <img
+                    src="https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alrz5b3t9ce8.png"
+                    alt="Nature Experience"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-5">
+                    <h3 className="text-lg font-medium text-white">What to Expect</h3>
                   </div>
                 </div>
-
-                <ul className="space-y-2 text-muted-foreground">
-                  <li className="flex items-start gap-2">
-                    <span className="text-primary font-bold">✓</span>
-                    <span>Premium camping tents with comfortable bedding</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-primary font-bold">✓</span>
-                    <span>Bonfire and BBQ facilities</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-primary font-bold">✓</span>
-                    <span>Guided hiking tours to Baskochi Meadows</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-primary font-bold">✓</span>
-                    <span>Stunning views of Attabad Lake</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-primary font-bold">✓</span>
-                    <span>Restaurant dining access</span>
-                  </li>
-                </ul>
-                <Button 
-                  onClick={handleCampingBooking}
-                  className="w-full rounded-full font-bold text-lg py-6"
-                >
-                  <Calendar className="h-5 w-5 mr-2" />
-                  Book Camping Now
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="border-none shadow-2xl bg-card overflow-hidden rounded-3xl">
-              <div className="relative h-64 overflow-hidden">
-                <img
-                  src="https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260330/file-alrz5b3t9ce8.png"
-                  alt="Nature Experience"
-                  className="w-full h-full object-cover"
-                />
+                <div className="p-5">
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+                    Our camping site is located in a pristine natural setting with direct access to the Baskochi Track.
+                  </p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Experience the tranquility of nature, enjoy stargazing, and wake up to breathtaking mountain views. Perfect for families, groups, and adventure enthusiasts!
+                  </p>
+                </div>
               </div>
-              <CardHeader className="p-6">
-                <CardTitle className="text-2xl font-bold text-primary">What to Expect</CardTitle>
-              </CardHeader>
-              <CardContent className="px-6 pb-6 space-y-4">
-                <p className="text-muted-foreground leading-relaxed">
-                  Our camping site is located in a pristine natural setting with direct access to the Baskochi Track. Experience the tranquility of nature, enjoy stargazing, and wake up to breathtaking mountain views.
-                </p>
-                <p className="text-muted-foreground leading-relaxed">
-                  Perfect for families, groups, and adventure enthusiasts looking for an authentic outdoor experience in Hunza Valley.
-                </p>
-              </CardContent>
-            </Card>
+            </div>
           </div>
-        </div>
+        </section>
 
         {/* Resort Section - Coming Soon */}
-        <div className="space-y-8">
-          <div className="text-center space-y-4">
-            <div className="flex justify-center">
-              <div className="p-4 bg-muted rounded-full">
-                <Building2 className="h-12 w-12 text-muted-foreground" />
+        <section className="py-12 md:py-16 bg-muted/30">
+          <div className="max-w-4xl mx-auto px-4 md:px-8 lg:px-16">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center p-3 bg-muted/50 rounded-full mb-4">
+                <Building2 className="h-6 w-6 text-muted-foreground" />
               </div>
+              <h2 className="text-xl md:text-2xl font-semibold text-muted-foreground mb-3">Leopard Cave Resort</h2>
+              <div className="inline-block px-4 py-1.5 bg-amber-500/10 rounded-full mb-3">
+                <span className="text-xs font-medium text-amber-600">Coming Soon</span>
+              </div>
+              <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
+                We are planning to build a premium resort facility at Leopard Cave. Stay tuned for updates!
+              </p>
             </div>
-            <h2 className="text-3xl md:text-5xl font-bold text-muted-foreground">Leopard Cave Resort</h2>
-            <div className="inline-block px-6 py-3 bg-amber-500/20 rounded-full">
-              <span className="text-xl font-bold text-amber-600">Coming Soon</span>
-            </div>
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              We are planning to build a premium resort facility at Leopard Cave. Construction has not started yet, but stay tuned for updates!
-            </p>
-          </div>
 
-          <Card className="border-none shadow-2xl bg-muted/30 overflow-hidden rounded-3xl max-w-4xl mx-auto">
-            <CardContent className="p-8 md:p-12 text-center space-y-6">
-              <h3 className="text-2xl md:text-3xl font-bold text-primary">Future Plans</h3>
-              <p className="text-lg text-muted-foreground leading-relaxed">
-                The Leopard Cave Resort will offer luxury accommodation with modern amenities while maintaining harmony with the natural environment. The resort will feature comfortable rooms, spa facilities, and exclusive dining experiences with panoramic views of Attabad Lake.
+            <div className="bg-card rounded-xl border border-border shadow-sm p-6 text-center">
+              <h3 className="text-base font-medium text-foreground mb-3">Future Plans</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                The Leopard Cave Resort will offer luxury accommodation with modern amenities while maintaining harmony with the natural environment.
               </p>
-              <p className="text-muted-foreground">
-                Follow us on social media to stay updated on the resort development progress and be the first to know when bookings open!
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Follow us on social media to stay updated on the resort development progress!
               </p>
-              <Button asChild variant="outline" className="rounded-full font-bold">
-                <Link to="/social-media">Follow Our Social Media</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </div>
+        </section>
       </div>
-    </div>
+    </>
   );
 }
