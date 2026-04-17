@@ -21,7 +21,6 @@ const App: React.FC = () => {
           <LoadingScreen />
           <ScrollToTop />
           <IntersectObserver />
-
           {isAdminDomain ? (
             <Suspense fallback={<div className="flex h-screen w-full items-center justify-center bg-background text-foreground">Loading...</div>}>
               <Routes>

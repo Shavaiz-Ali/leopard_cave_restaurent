@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -30,49 +30,80 @@ const navItemsAfterMenu = [
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 500);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const isMenuActive = location.pathname === '/menu' || location.pathname === '/menu-cards' || location.pathname === '/menu-images';
+  const isHomePage = location.pathname === '/';
+  const shouldUseLightTheme = isScrolled || !isHomePage;
 
   return (
-    <nav className="fixed top-0 z-50 w-full border-b border-white/20 bg-black/50 backdrop-blur-lg supports-[backdrop-filter]:bg-black/50">
-      <div className="container flex h-20 items-center justify-between px-4 md:px-6 max-w-7xl mx-auto">
-        <Link to="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity flex-shrink-0">
+    <nav className={cn(
+      "fixed top-0 z-50 w-full border-b backdrop-blur-sm transition-all duration-300",
+      shouldUseLightTheme
+        ? "bg-background/95 border-border"
+        : "bg-black/50 border-white/20"
+    )}>
+      <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16 flex h-16 items-center justify-between">
+        <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity flex-shrink-0">
           <img 
             src="https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260403/file-aozbm8hrcgzk.jpeg" 
             alt="Leopard Cave Logo" 
-            className="h-11 w-11 object-cover rounded-full border-2 border-white shadow-lg"
+            className={cn(
+              "h-10 w-10 object-cover rounded-full shadow-sm",
+              shouldUseLightTheme ? "border-2 border-primary" : "border-2 border-white"
+            )}
           />
-          <span className="text-sm md:text-base font-bold tracking-tight text-white leading-none drop-shadow-lg whitespace-nowrap">
-            Leopard Cave Restaurant
+          <span className={cn(
+            "text-base font-semibold leading-none",
+            shouldUseLightTheme ? "text-foreground" : "text-white"
+          )}>
+            Leopard Cave
           </span>
         </Link>
 
         {/* Desktop Nav */}
-        <div className="hidden lg:flex gap-3 xl:gap-4 items-center">
+        <div className="hidden lg:flex gap-1 items-center">
           {navItemsBeforeMenu.map((item) => (
             <Link
               key={item.path}
               to={item.path}
               className={cn(
-                "text-xs xl:text-sm font-semibold transition-all duration-300 hover:text-primary hover:scale-105 drop-shadow-md px-2 xl:px-3 py-2 rounded-md whitespace-nowrap",
-                location.pathname === item.path 
-                  ? "text-primary bg-white/20 backdrop-blur-sm border-b-2 border-primary" 
-                  : "text-white/90 hover:bg-white/10"
+                "text-sm font-medium px-4 py-2 rounded-lg transition-all duration-200",
+                shouldUseLightTheme
+                  ? location.pathname === item.path 
+                    ? "text-primary bg-primary/10" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  : location.pathname === item.path 
+                    ? "text-primary bg-white/20" 
+                    : "text-white/90 hover:text-white hover:bg-white/10"
               )}
             >
               {item.name}
             </Link>
           ))}
           
-          {/* Menu Link - No Dropdown */}
+          {/* Menu Link */}
           <Link
             to="/menu"
             className={cn(
-              "text-xs xl:text-sm font-semibold transition-all duration-300 hover:text-primary hover:scale-105 drop-shadow-md px-2 xl:px-3 py-2 rounded-md whitespace-nowrap",
-              isMenuActive
-                ? "text-primary bg-white/20 backdrop-blur-sm border-b-2 border-primary" 
-                : "text-white/90 hover:bg-white/10"
+              "text-sm font-medium px-4 py-2 rounded-lg transition-all duration-200",
+              shouldUseLightTheme
+                ? isMenuActive
+                  ? "text-primary bg-primary/10" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                : isMenuActive
+                  ? "text-primary bg-white/20" 
+                  : "text-white/90 hover:text-white hover:bg-white/10"
             )}
           >
             Menu
@@ -83,51 +114,62 @@ export function Navbar() {
               key={item.path}
               to={item.path}
               className={cn(
-                "text-xs xl:text-sm font-semibold transition-all duration-300 hover:text-primary hover:scale-105 drop-shadow-md px-2 xl:px-3 py-2 rounded-md whitespace-nowrap",
-                location.pathname === item.path 
-                  ? "text-primary bg-white/20 backdrop-blur-sm border-b-2 border-primary" 
-                  : "text-white/90 hover:bg-white/10"
+                "text-sm font-medium px-4 py-2 rounded-lg transition-all duration-200",
+                shouldUseLightTheme
+                  ? location.pathname === item.path 
+                    ? "text-primary bg-primary/10" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  : location.pathname === item.path 
+                    ? "text-primary bg-white/20" 
+                    : "text-white/90 hover:text-white hover:bg-white/10"
               )}
             >
               {item.name}
             </Link>
           ))}
 
-          <Button asChild size="sm" className="ml-2 xl:ml-4 rounded-full font-bold shadow-lg hover:scale-105 hover:bg-white hover:text-primary hover:shadow-white/50 transition-all duration-300 bg-primary text-primary-foreground whitespace-nowrap text-xs xl:text-sm px-4 xl:px-6">
-            <Link to="/reservation" target="_blank" rel="noopener noreferrer">Book Now</Link>
+          <Button asChild className={cn(
+            "ml-4 px-5 py-2.5 rounded-lg text-sm font-medium",
+            !shouldUseLightTheme && "bg-primary text-primary-foreground"
+          )}>
+            <Link to="/reservation">Book Now</Link>
           </Button>
         </div>
 
         {/* Mobile Nav */}
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild className="lg:hidden">
-            <Button variant="ghost" size="icon" className="hover:bg-white/20">
-              <Menu className="h-6 w-6 text-white" />
+            <Button variant="ghost" size="icon">
+              <Menu className={cn("h-6 w-6", !shouldUseLightTheme ? "text-white" : "")} />
             </Button>
           </SheetTrigger>
           <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-            <div className="flex flex-col gap-4 mt-8">
+            <div className="flex flex-col gap-2 mt-8">
               {navItemsBeforeMenu.map((item) => (
                 <Link
                   key={item.path}
                   to={item.path}
                   onClick={() => setIsOpen(false)}
                   className={cn(
-                    "text-lg font-semibold transition-colors hover:text-primary px-4 py-2 rounded-md",
-                    location.pathname === item.path ? "bg-primary/10 text-primary" : "text-muted-foreground"
+                    "text-sm font-medium px-4 py-3 rounded-lg transition-all duration-200",
+                    location.pathname === item.path 
+                      ? "text-primary bg-primary/10" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   )}
                 >
                   {item.name}
                 </Link>
               ))}
               
-              {/* Mobile Menu Link - No Dropdown */}
+              {/* Mobile Menu Link */}
               <Link
                 to="/menu"
                 onClick={() => setIsOpen(false)}
                 className={cn(
-                  "text-lg font-semibold transition-colors hover:text-primary px-4 py-2 rounded-md",
-                  isMenuActive ? "bg-primary/10 text-primary" : "text-muted-foreground"
+                  "text-sm font-medium px-4 py-3 rounded-lg transition-all duration-200",
+                  isMenuActive 
+                    ? "text-primary bg-primary/10" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 )}
               >
                 Menu
@@ -139,16 +181,18 @@ export function Navbar() {
                   to={item.path}
                   onClick={() => setIsOpen(false)}
                   className={cn(
-                    "text-lg font-semibold transition-colors hover:text-primary px-4 py-2 rounded-md",
-                    location.pathname === item.path ? "bg-primary/10 text-primary" : "text-muted-foreground"
+                    "text-sm font-medium px-4 py-3 rounded-lg transition-all duration-200",
+                    location.pathname === item.path 
+                      ? "text-primary bg-primary/10" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   )}
                 >
                   {item.name}
                 </Link>
               ))}
 
-              <Button asChild size="lg" className="mt-4 rounded-full font-bold hover:scale-105 hover:bg-secondary hover:shadow-primary/50 transition-all duration-300" onClick={() => setIsOpen(false)}>
-                <Link to="/reservation" target="_blank" rel="noopener noreferrer">Book Now</Link>
+              <Button asChild className="mt-6 w-full px-5 py-2.5 rounded-lg text-sm font-medium" onClick={() => setIsOpen(false)}>
+                <Link to="/reservation">Book Now</Link>
               </Button>
             </div>
           </SheetContent>
@@ -160,40 +204,41 @@ export function Navbar() {
 
 export function Footer() {
   return (
-    <footer className="w-full border-t bg-muted/30 py-12">
-      <div className="container px-4 md:px-8 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
-        <div>
-          <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
-            <img 
-              src="https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260403/file-aozbm8hrcgzk.jpeg" 
-              alt="Leopard Cave Logo" 
-              className="h-10 w-10 object-cover rounded-full border-2 border-primary shadow-lg"
-            />
-            <span className="text-xl font-bold text-primary uppercase">Leopard Cave Restaurant</span>
+    <footer className="w-full border-t bg-background py-12 md:py-16">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <img 
+                src="https://miaoda-conversation-file.s3cdn.medo.dev/user-a7t3ahj4kw74/conv-ak64calg34zk/20260403/file-aozbm8hrcgzk.jpeg" 
+                alt="Leopard Cave Logo" 
+                className="h-10 w-10 object-cover rounded-full border-2 border-primary shadow-sm"
+              />
+              <span className="text-lg font-semibold text-foreground">Leopard Cave</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              A unique dining experience with breathtaking panoramic views of the stunning Attabad Lake.
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground max-w-xs mx-auto md:mx-0">
-            A unique dining experience with breathtaking panoramic views of the stunning Attabad Lake.
-          </p>
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold mb-4 text-foreground">Contact Us</h3>
-          <ul className="text-sm text-muted-foreground space-y-2">
-            <li>Above Attabad Lake, Gojal, Hunza</li>
-            <li>Gilgit-Baltistan, Pakistan</li>
-            <li>Email: Leopardcaverestaurantofficial@gmail.com</li>
-            <li>Phone: +92 316 0605535</li>
-          </ul>
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold mb-4 text-foreground">Follow Us</h3>
-          <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
-            {/* Social Media Icons */}
-            <div className="flex gap-4 justify-center md:justify-start">
+
+          <div className="space-y-4">
+            <h3 className="text-base font-semibold text-foreground">Contact Us</h3>
+            <ul className="text-sm text-muted-foreground space-y-2">
+              <li>Above Attabad Lake, Gojal, Hunza</li>
+              <li>Gilgit-Baltistan, Pakistan</li>
+              <li>Email: Leopardcaverestaurantofficial@gmail.com</li>
+              <li>Phone: +92 316 0605535</li>
+            </ul>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-base font-semibold text-foreground">Follow Us</h3>
+            <div className="flex gap-3">
               <a 
                 href="https://wa.me/923160605535" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="h-10 w-10 rounded-full bg-green-600 hover:bg-green-700 flex items-center justify-center text-white transition-all hover:scale-110 shadow-md"
+                className="h-10 w-10 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center text-primary transition-all hover:scale-105"
                 aria-label="WhatsApp"
               >
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -204,7 +249,7 @@ export function Footer() {
                 href="https://www.facebook.com/profile.php?id=61582236326778" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="h-10 w-10 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center text-white transition-all hover:scale-110 shadow-md"
+                className="h-10 w-10 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center text-primary transition-all hover:scale-105"
                 aria-label="Facebook"
               >
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -215,7 +260,7 @@ export function Footer() {
                 href="https://www.instagram.com/leopard.cave.restaurant?igsh=MXZ0eWtsN3NoMW1zaQ==" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-600 via-pink-600 to-orange-600 hover:opacity-90 flex items-center justify-center text-white transition-all hover:scale-110 shadow-md"
+                className="h-10 w-10 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center text-primary transition-all hover:scale-105"
                 aria-label="Instagram"
               >
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -226,7 +271,7 @@ export function Footer() {
                 href="https://www.tiktok.com/@leopard.cave.restaurant?_r=1&_t=ZS-954evnj7xI8" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="h-10 w-10 rounded-full bg-black hover:bg-gray-800 flex items-center justify-center text-white transition-all hover:scale-110 shadow-md"
+                className="h-10 w-10 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center text-primary transition-all hover:scale-105"
                 aria-label="TikTok"
               >
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -234,36 +279,14 @@ export function Footer() {
                 </svg>
               </a>
             </div>
-            
-            {/* Promotional Section - Right Side */}
-            <div className="flex flex-col items-center md:items-start md:pl-6 md:border-l md:border-border">
-              <p className="text-xs text-muted-foreground mb-2 text-center md:text-left">
-                For Digital Marketing Services
-              </p>
-              <a 
-                href="https://futurenaire.netlify.app/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
-              >
-                Visit Futurenaire
-                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-            </div>
-          </div>
-          
-          {/* Opening Hours Below */}
-          <div className="text-sm text-muted-foreground space-y-1 mt-6">
-            <p className="font-semibold">Opening Hours</p>
-            <p>Monday - Sunday</p>
-            <p>8:00 AM - 12:00 Midnight</p>
           </div>
         </div>
-      </div>
-      <div className="container mt-12 pt-8 border-t px-4 md:px-8 max-w-7xl mx-auto text-center">
-        <p className="text-xs text-muted-foreground">© 2026 Leopard Cave Restaurant. All rights reserved.</p>
+
+        <div className="mt-12 pt-8 border-t text-center">
+          <p className="text-xs text-muted-foreground">
+            © 2026 Leopard Cave Restaurant. All rights reserved.
+          </p>
+        </div>
       </div>
     </footer>
   );

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { Utensils } from 'lucide-react';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import SEO from '@/components/common/SEO';
 import BackButton from '@/components/common/BackButton';
 import { supabase } from '@/utils/supabase';
@@ -16,6 +17,7 @@ interface MenuImage {
 export default function MenuImages() {
   const [menuImages, setMenuImages] = useState<MenuImage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState<MenuImage | null>(null);
 
   useEffect(() => {
     const fetchMenuImages = async () => {
@@ -45,67 +47,86 @@ export default function MenuImages() {
         description="Explore our menu featuring authentic local dishes of Hunza, traditional Pakistani cuisine, and international favorites. Best restaurant menu in Hunza Valley with fresh ingredients and local specialties."
         keywords="Hunza local food, local dishes of Hunza, Hunza food menu, best restaurants in Hunza menu, traditional Hunza cuisine, Pakistani food Hunza, restaurant menu Gilgit Baltistan"
       />
-      <div className="flex flex-col w-full min-h-screen py-16 bg-background">
-        <div className="container px-4 md:px-8 max-w-7xl mx-auto space-y-12">
-          <BackButton />
-          {/* Title Only */}
-          <div className="text-center">
-            <h1 className="text-4xl md:text-7xl font-extrabold text-primary tracking-tight uppercase">
-              Our Menu
-            </h1>
+      <div className="min-h-screen bg-background">
+        {/* Hero Section */}
+        <section className="py-16 md:py-24 bg-muted/30">
+          <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
+            <div className="mb-6">
+              <BackButton />
+            </div>
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-4">
+                <Utensils className="h-6 w-6 text-primary" />
+              </div>
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-primary mb-3">
+                Our Menu
+              </h1>
+              <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto">
+                Explore our delicious menu featuring authentic local dishes and international cuisine
+              </p>
+            </div>
           </div>
+        </section>
 
-          {/* Menu Images Grid */}
-          {loading ? (
-            <div className="flex justify-center items-center py-20 text-muted-foreground">
-              Loading menu...
-            </div>
-          ) : menuImages.length === 0 ? (
-            <div className="text-center py-20 text-muted-foreground border-2 border-dashed rounded-3xl">
-              Our new menu pages are being updated. Please check back later or view our menu cards.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-8">
-              {menuImages.map((menu) => (
-                <Card key={menu.id} className="overflow-hidden border-none shadow-2xl hover:shadow-primary/20 transition-all duration-300 bg-card">
-                  <CardContent className="p-0">
-                    <div className="relative">
-                      <img
-                        src={menu.url}
-                        alt={menu.title}
-                        className="w-full h-auto object-contain bg-muted"
-                      />
+        {/* Menu Images Grid */}
+        <section className="py-16 md:py-24">
+          <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="aspect-[4/5] rounded-xl bg-muted animate-pulse" />
+                ))}
+              </div>
+            ) : menuImages.length === 0 ? (
+              <div className="text-center py-16 text-muted-foreground border border-border rounded-xl">
+                Our new menu pages are being updated. Please check back later.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                {menuImages.map((menu) => (
+                  <div
+                    key={menu.id}
+                    className="group relative aspect-[4/5] rounded-xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-all duration-300"
+                    onClick={() => setSelectedImage(menu)}
+                  >
+                    <img
+                      src={menu.url}
+                      alt={menu.title}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+                    <div className="relative h-full flex flex-col justify-end p-5 md:p-6">
+                      <h3 className="text-lg md:text-xl font-medium text-white mb-2">{menu.title}</h3>
                     </div>
-                    <div className="p-6 flex justify-center">
-                      <Button size="lg" asChild className="rounded-full text-lg px-10 py-6 font-bold shadow-xl hover:scale-105 hover:bg-secondary hover:shadow-primary/50 transition-all duration-300">
-                        <Link to="/reservation" target="_blank" rel="noopener noreferrer">Reserve Now</Link>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+
+      {/* Image Dialog */}
+      <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
+        <DialogContent className="sm:max-w-4xl p-0 overflow-hidden">
+          <DialogTitle className="sr-only">
+            {selectedImage?.title || 'Menu Item'}
+          </DialogTitle>
+          {selectedImage && (
+            <div>
+              <img
+                src={selectedImage.url}
+                alt={selectedImage.title}
+                className="w-full h-auto max-h-[80vh] object-contain"
+              />
+              <div className="p-6">
+                <h3 className="text-lg font-medium">{selectedImage.title}</h3>
+              </div>
             </div>
           )}
-
-          {/* Call to Action */}
-          <div className="text-center mt-20 p-12 bg-muted/50 rounded-3xl space-y-6 border border-primary/10">
-            <h3 className="text-2xl md:text-3xl font-bold text-primary">Ready to Dine with Us?</h3>
-            <p className="text-muted-foreground max-w-xl mx-auto text-lg">
-              Reserve your table now and experience the unique flavors and breathtaking views at Leopard Cave Restaurant
-            </p>
-            <Button size="lg" asChild className="rounded-full text-lg px-12 py-7 font-bold shadow-xl hover:scale-105 hover:bg-secondary hover:shadow-primary/50 transition-all duration-300">
-              <Link to="/reservation" target="_blank" rel="noopener noreferrer">Book Your Table</Link>
-            </Button>
-          </div>
-
-          <div className="text-center p-12 bg-muted/50 rounded-3xl space-y-4 border border-primary/10">
-            <h3 className="text-2xl font-bold">Special Dietary Requirements?</h3>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              Please inform our staff about any allergies or dietary restrictions. We are happy to customize our dishes for you.
-            </p>
-          </div>
-        </div>
-      </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

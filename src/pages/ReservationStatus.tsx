@@ -1,14 +1,12 @@
 import BackButton from "@/components/common/BackButton";
 import SEO from "@/components/common/SEO";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Phone, XCircle } from "lucide-react";
+import { Phone, XCircle, Search, Loader2 } from "lucide-react";
 import { getReservationsByPhone, cancelReservation } from "@/db/api";
 import { Reservation, ReservationItem } from "@/types/types";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -25,6 +23,15 @@ export default function ReservationStatus() {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+    value = value.replace(/^\+92/, '').replace(/^92/, '');
+    value = value.replace(/^0/, '');
+    value = value.replace(/\D/g, '');
+    value = value.slice(0, 10);
+    setPhoneNumber(value);
+  };
+
   useEffect(() => {
     const phone = searchParams.get('phone');
     if (phone) {
@@ -36,41 +43,43 @@ export default function ReservationStatus() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="secondary" className="text-sm py-1.5 px-4 bg-amber-100 text-amber-800 border-none">Pending</Badge>;
+        return <Badge variant="outline" className="text-xs py-1.5 px-3 bg-amber-100 text-amber-800 border-none">Pending</Badge>;
       case 'confirmed':
-        return <Badge variant="secondary" className="text-sm py-1.5 px-4 bg-green-100 text-green-800 border-none">Confirmed</Badge>;
+        return <Badge variant="outline" className="text-xs py-1.5 px-3 bg-green-100 text-green-800 border-none">Confirmed</Badge>;
       case 'cancelled':
-        return <Badge variant="secondary" className="text-sm py-1.5 px-4 bg-red-100 text-red-800 border-none">Cancelled</Badge>;
+        return <Badge variant="outline" className="text-xs py-1.5 px-3 bg-red-100 text-red-800 border-none">Cancelled</Badge>;
       case 'completed':
-        return <Badge variant="secondary" className="text-sm py-1.5 px-4 bg-blue-100 text-blue-800 border-none">Completed</Badge>;
+        return <Badge variant="outline" className="text-xs py-1.5 px-3 bg-blue-100 text-blue-800 border-none">Completed</Badge>;
       default:
-        return <Badge variant="secondary" className="text-sm py-1.5 px-4 bg-gray-100 text-gray-800 border-none">{status}</Badge>;
+        return <Badge variant="outline" className="text-xs py-1.5 px-3 bg-gray-100 text-gray-800 border-none">{status}</Badge>;
     }
   };
   
   const getAdvanceStatusBadge = (status?: string) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="secondary" className="text-sm py-1.5 px-4 bg-amber-100 text-amber-800 border-none">Not Received</Badge>;
+        return <Badge variant="outline" className="text-xs py-1.5 px-3 bg-amber-100 text-amber-800 border-none">Not Received</Badge>;
       case 'received':
-        return <Badge variant="secondary" className="text-sm py-1.5 px-4 bg-green-100 text-green-800 border-none">Received</Badge>;
+        return <Badge variant="outline" className="text-xs py-1.5 px-3 bg-green-100 text-green-800 border-none">Received</Badge>;
       default:
-        return <Badge variant="secondary" className="text-sm py-1.5 px-4 bg-gray-100 text-gray-800 border-none">{status || 'Unknown'}</Badge>;
+        return <Badge variant="outline" className="text-xs py-1.5 px-3 bg-gray-100 text-gray-800 border-none">{status || 'Unknown'}</Badge>;
     }
   };
 
   const fetchReservations = async (phoneToUse?: string) => {
-    const phone = phoneToUse || phoneNumber;
-    if (!phone) {
+    const rawPhone = phoneToUse || phoneNumber;
+    if (!rawPhone) {
       setError("Please enter a phone number");
       return;
     }
+
+    const phoneWithPrefix = `+92${rawPhone}`;
 
     setLoading(true);
     setError(null);
 
     try {
-      const data = await getReservationsByPhone(phone);
+      const data = await getReservationsByPhone(phoneWithPrefix);
       setReservations(data);
     } catch (err) {
       console.error('Error fetching reservations:', err);
@@ -109,180 +118,173 @@ export default function ReservationStatus() {
         description="Check your reservation status and order details at Leopard Cave Restaurant, Hunza Valley"
         keywords="check reservation, reservation status, track order Hunza, Leopard Cave reservation"
       />
-      <div className="flex flex-col w-full min-h-screen py-16 bg-background">
-        <div className="container px-4 md:px-8 max-w-4xl mx-auto space-y-12">
-          <BackButton />
-          
-          <div className="text-center space-y-4">
-            <h1 className="text-4xl md:text-6xl font-extrabold text-primary tracking-tight uppercase">Check Reservation Status</h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-              Enter your phone number to view your reservations and order details
-            </p>
+      <div className="min-h-screen bg-background">
+        {/* Hero Section */}
+        <section className="py-12 md:py-16 bg-muted/30">
+          <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
+            <div className="mb-6">
+              <BackButton />
+            </div>
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-4">
+                <Phone className="h-6 w-6 text-primary" />
+              </div>
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-primary mb-3">
+                Check Reservation Status
+              </h1>
+              <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto">
+                Enter your phone number to view your reservations and order details
+              </p>
+            </div>
           </div>
+        </section>
 
-          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 bg-card rounded-3xl">
-            <CardHeader className="p-8">
-              <CardTitle className="text-2xl font-bold flex items-center gap-3 text-primary">
-                <Phone className="h-6 w-6" />
-                Enter Phone Number
-              </CardTitle>
-              <CardDescription className="text-lg text-muted-foreground">
-                We'll use your phone number to find your reservations
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-8 pt-0 space-y-6">
+        {/* Main Content */}
+        <section className="py-12 md:py-16">
+          <div className="max-w-4xl mx-auto px-4 md:px-8 lg:px-16">
+            {/* Phone Input */}
+            <div className="mb-10">
               <div className="flex flex-col md:flex-row gap-4">
-                <Input
-                  type="tel"
-                  placeholder="+92 3XX XXXXXXX"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="h-14 text-lg rounded-2xl border-primary/20 focus:border-primary"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      fetchReservations();
-                    }
-                  }}
-                />
+                <div className="relative flex-1">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground pointer-events-none">
+                    +92
+                  </div>
+                  <Input
+                    type="tel"
+                    placeholder="3XX XXXXXXX"
+                    value={phoneNumber}
+                    onChange={handlePhoneChange}
+                    className="pl-12 py-2.5 text-sm rounded-lg border-border focus:border-primary"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        fetchReservations();
+                      }
+                    }}
+                  />
+                </div>
                 <Button
-                  size="lg"
-                  className="h-14 text-xl font-bold px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
                   onClick={() => fetchReservations()}
                   disabled={loading}
+                  className="px-6 py-2.5 rounded-lg text-sm font-medium"
                 >
                   {loading ? 'Loading...' : 'Check Status'}
                 </Button>
               </div>
 
               {error && (
-                <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-2xl p-6">
-                  <p className="text-red-800 dark:text-red-200 text-lg">{error}</p>
+                <div className="mt-4 p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <p className="text-red-800 dark:text-red-200 text-sm">{error}</p>
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-          {loading && (
-            <div className="space-y-6">
-              <Skeleton className="h-64 w-full rounded-3xl" />
-              <Skeleton className="h-64 w-full rounded-3xl" />
             </div>
-          )}
 
-          {!loading && reservations.length > 0 && (
-            <div className="space-y-8">
-              <h2 className="text-3xl font-bold text-primary">Your Reservations</h2>
-              
-              {reservations.map((reservation, idx) => {
-                console.log('Reservation:', reservation, 'status:', reservation.status);
-                return (
-                <Card key={reservation.id} className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 bg-card rounded-3xl">
-                  <CardHeader className="p-8 pb-4">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                      <div>
-                        <CardTitle className="text-2xl font-bold">
-                          Reservation for {reservation.full_name}
-                        </CardTitle>
-                        <CardDescription className="text-lg text-muted-foreground mt-1">
-                          {reservation.reservation_date} at {reservation.reservation_time} • {reservation.guests_count} Guests
-                        </CardDescription>
-                      </div>
-                      <div className="flex flex-col gap-2 items-end">
-                        {getStatusBadge(reservation.status || 'pending')}
-                        {getAdvanceStatusBadge(reservation.advance_payment_status)}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-8 pt-0 space-y-6">
-                    <div className="p-4 border border-red-200 bg-red-50 rounded-xl">
-                      <p className="text-red-800 font-bold text-lg mb-3">TEST: CANCEL RESERVATION BUTTON</p>
-                      <Button
-                        variant="destructive"
-                        size="lg"
-                        onClick={() => handleCancelClick(reservation.id)}
-                        className="w-full gap-2"
-                      >
-                        <XCircle className="h-5 w-5" />
-                        CANCEL RESERVATION NOW
-                      </Button>
-                      <p className="text-sm text-red-600 mt-2">
-                        Status value: "{reservation.status}" (type: {typeof reservation.status})
-                      </p>
-                    </div>
-                    <Separator className="bg-primary/10" />
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <h4 className="text-lg font-bold text-primary">Order Summary</h4>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead className="text-base font-semibold">Item</TableHead>
-                              <TableHead className="text-base font-semibold text-center">Qty</TableHead>
-                              <TableHead className="text-base font-semibold text-right">Price</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {(reservation as any).reservation_items?.map((item: ReservationItem) => (
-                              <TableRow key={item.id}>
-                                <TableCell className="font-medium">{item.menu_item_name}</TableCell>
-                                <TableCell className="text-center">{item.quantity}</TableCell>
-                                <TableCell className="text-right font-bold">PKR {item.price * item.quantity}</TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
+            {/* Loading State */}
+            {loading && (
+              <div className="space-y-4">
+                <Skeleton className="h-48 w-full rounded-xl" />
+                <Skeleton className="h-48 w-full rounded-xl" />
+              </div>
+            )}
+
+            {/* Reservations List */}
+            {!loading && reservations.length > 0 && (
+              <div className="space-y-6">
+                <h2 className="text-xl md:text-2xl font-semibold text-foreground">Your Reservations</h2>
+                
+                {reservations.map((reservation) => (
+                  <div key={reservation.id} className="overflow-hidden rounded-xl bg-card shadow-sm border border-border">
+                    <div className="p-5">
+                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                        <div>
+                          <h3 className="text-lg font-medium text-card-foreground">
+                            Reservation for {reservation.full_name}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {reservation.reservation_date} at {reservation.reservation_time} • {reservation.guests_count} Guests
+                          </p>
+                        </div>
+                        <div className="flex flex-col gap-2 items-start md:items-end">
+                          <div className="flex gap-2">
+                            {getStatusBadge(reservation.status || 'pending')}
+                            {getAdvanceStatusBadge(reservation.advance_payment_status)}
+                          </div>
+                          {reservation.status?.toLowerCase() === 'pending' && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleCancelClick(reservation.id)}
+                              className="mt-2 text-xs px-3 py-1.5"
+                            >
+                              <XCircle className="h-3 w-3 mr-1" />
+                              Cancel
+                            </Button>
+                          )}
+                        </div>
                       </div>
                       
-                      <div className="space-y-4">
-                        <h4 className="text-lg font-bold text-primary">Payment Details</h4>
-                        <div className="space-y-3 bg-muted/50 rounded-2xl p-6">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Total Amount:</span>
-                            <span className="font-bold text-xl">PKR {reservation.total_amount}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Advance Paid:</span>
-                            <span className="font-bold text-xl">PKR {reservation.advance_payment}</span>
-                          </div>
-                          <Separator className="bg-primary/10" />
-                          <div className="flex justify-between">
-                            <span className="font-bold text-lg">Payment Method:</span>
-                            <span className="font-bold text-xl capitalize">
-                              {reservation.payment_method === 'jazzcash' ? 'JazzCash' : 
-                               reservation.payment_method === 'easypaisa' ? 'Easypaisa' : 'Crypto'}
-                            </span>
+                      <Separator className="my-4" />
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        {/* Order Summary */}
+                        <div>
+                          <h4 className="text-sm font-medium text-primary mb-3">Order Summary</h4>
+                          <div className="space-y-2">
+                            {(reservation as any).reservation_items?.map((item: ReservationItem) => (
+                              <div key={item.id} className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">{item.menu_item_name} × {item.quantity}</span>
+                                <span className="font-medium">PKR {item.price * item.quantity}</span>
+                              </div>
+                            ))}
                           </div>
                         </div>
                         
-                        {reservation.special_requests && (
-                          <div className="space-y-2">
-                            <h5 className="font-bold text-lg">Special Requests</h5>
-                            <div className="bg-muted/50 rounded-2xl p-4">
-                              <p className="text-muted-foreground">{reservation.special_requests}</p>
+                        {/* Payment Details */}
+                        <div>
+                          <h4 className="text-sm font-medium text-primary mb-3">Payment Details</h4>
+                          <div className="space-y-2 bg-muted/30 rounded-lg p-4">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Total Amount:</span>
+                              <span className="font-medium">PKR {reservation.total_amount}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Advance Paid:</span>
+                              <span className="font-medium">PKR {reservation.advance_payment}</span>
+                            </div>
+                            <Separator className="my-2" />
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Payment Method:</span>
+                              <span className="font-medium capitalize">
+                                {reservation.payment_method === 'jazzcash' ? 'JazzCash' : 
+                                 reservation.payment_method === 'easypaisa' ? 'Easypaisa' : 'Crypto'}
+                              </span>
                             </div>
                           </div>
-                        )}
+                          
+                          {reservation.special_requests && (
+                            <div className="mt-3">
+                              <h5 className="text-xs font-medium text-muted-foreground mb-2">Special Requests</h5>
+                              <p className="text-sm text-muted-foreground">{reservation.special_requests}</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-                );
-              })}
-            </div>
-          )}
+                  </div>
+                ))}
+              </div>
+            )}
 
-          {!loading && reservations.length === 0 && phoneNumber && (
-            <Card className="border-none shadow-xl bg-card rounded-3xl">
-              <CardContent className="p-16 text-center">
-                <h3 className="text-2xl font-bold text-primary mb-2">No Reservations Found</h3>
-                <p className="text-muted-foreground text-lg">
+            {/* Empty State */}
+            {!loading && reservations.length === 0 && phoneNumber && (
+              <div className="text-center py-12 border border-border rounded-xl bg-card">
+                <h3 className="text-lg font-medium text-card-foreground mb-2">No Reservations Found</h3>
+                <p className="text-sm text-muted-foreground">
                   No reservations found for this phone number. Please check the number and try again.
                 </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+              </div>
+            )}
+          </div>
+        </section>
       </div>
 
       {/* Cancellation Confirmation Dialog */}

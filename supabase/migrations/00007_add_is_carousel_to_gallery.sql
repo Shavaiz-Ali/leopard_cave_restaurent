@@ -1,4 +1,6 @@
--- Migration: Add is_carousel column to gallery table
+-- Migration: Add payment_method column to reservations table
 -- Run this in the Supabase Dashboard (SQL Editor)
 
-alter table gallery add column if not exists featured boolean not null default false;
+alter table reservations add column if not exists total_amount text not null default '0';
+alter table reservations add column if not exists total_amount text not null default '0';
+
