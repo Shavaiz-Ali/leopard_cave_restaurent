@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 const ReservationPopup: React.FC = () => {
   const { selectedItems, totalCount, removeItem, updateQuantity } = useReservation();
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(selectedItems?.length > 0 ? true : false);
   const navigate = useNavigate();
   const location = useLocation();
 

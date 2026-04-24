@@ -45,7 +45,6 @@ export const ReservationProvider: React.FC<{ children: React.ReactNode }> = ({ c
           i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
         );
       }
-      toast.success(`Added ${item.name} to reservation`);
       return [...prev, { ...item, quantity: 1 }];
     });
   };
