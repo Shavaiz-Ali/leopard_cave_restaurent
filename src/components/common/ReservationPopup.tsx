@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useReservation } from '@/contexts/ReservationContext';
 import { Button } from '@/components/ui/button';
 import { ShoppingBag, X, Plus, Minus, ChevronUp, ChevronDown } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const ReservationPopup: React.FC = () => {
