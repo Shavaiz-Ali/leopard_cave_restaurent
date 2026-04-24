@@ -29,9 +29,10 @@ export interface MenuItem {
   id: string;
   name: string;
   description: string;
-  category_id: string;
+  category_id?: string;
   price?: string;
   categories?: { name: string } | null;
+  category?: string
 }
 
 export interface Attraction {

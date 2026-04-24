@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Utensils, Image, List, Search, Loader2 } from 'lucide-react';
 import SEO from '@/components/common/SEO';
 import { supabase } from '@/utils/supabase';
-import { useNavigate } from 'react-router-dom';
 import { useReservation } from '@/contexts/ReservationContext';
 
 interface MenuImage {
@@ -30,7 +29,6 @@ interface Category {
 }
 
 export default function MenuLanding() {
-  const navigate = useNavigate();
   const { addItem, selectedItems } = useReservation();
   const [activeTab, setActiveTab] = useState<'cards' | 'images'>('cards');
   const [searchQuery, setSearchQuery] = useState('');
