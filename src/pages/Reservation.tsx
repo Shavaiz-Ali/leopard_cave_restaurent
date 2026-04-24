@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Utensils, X, CheckCircle, Plus, Minus, Eye, XCircle } from 'lucide-react';
+import { Utensils, X, CheckCircle, Plus, Minus, Eye, XCircle, Check, ChevronsUpDown, Search } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -17,8 +17,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { supabase } from '@/utils/supabase';
 import { createReservation } from '@/db/api';
+import { useReservation } from '@/contexts/ReservationContext';
+import { cn } from "@/lib/utils";
 
 interface MenuItem {
   id: string;
@@ -63,13 +67,46 @@ type PaymentMethod = 'jazzcash' | 'easypaisa' | 'crypto' | null;
 
 export default function Reservation() {
   const [searchParams] = useSearchParams();
+  const { 
+    selectedItems: contextItems, 
+    addItem: contextAddItem, 
+    removeItem: contextRemoveItem, 
+    updateQuantity: contextUpdateQuantity,
+    clearReservation: contextClearReservation
+  } = useReservation();
+  
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
   const [menuSearchQuery, setMenuSearchQuery] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [menuLoading, setMenuLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+
+  // Convert context items to local items format if needed, 
+  // but let's see if we can just use context items directly.
+  // The local SelectedItem has price as number, context MenuItem has price as string.
+  
+  const selectedItems = useMemo(() => {
+    return contextItems.map(item => ({
+      id: item.id,
+      name: item.name,
+      price: parsePrice(item.price || '0'),
+      quantity: item.quantity
+    }));
+  }, [contextItems]);
+
+  const addItem = (item: MenuItem) => {
+      contextAddItem(item as any);
+    };
+
+  const removeItem = (id: string) => {
+    contextRemoveItem(id);
+  };
+
+  const updateQuantity = (id: string, quantity: number) => {
+     contextUpdateQuantity(id, quantity);
+   };
 
   useEffect(() => {
     const fetchMenuItems = async () => {
@@ -93,55 +130,6 @@ export default function Reservation() {
     fetchMenuItems();
   }, []);
 
-  useEffect(() => {
-    const itemId = searchParams.get('item');
-    const itemIds = searchParams.get('items');
-
-    if (itemIds && selectedItems.length === 0 && menuItems.length > 0) {
-      const ids = itemIds.split(',');
-      const itemsToAdd: SelectedItem[] = [];
-
-      ids.forEach(id => {
-        const menuItem = menuItems.find(item => item.id === id);
-        if (menuItem) {
-          const existingItem = itemsToAdd.find(item => item.id === id);
-          if (existingItem) {
-            existingItem.quantity += 1;
-          } else {
-            const price = parsePrice(menuItem.price);
-            itemsToAdd.push({
-              id: menuItem.id,
-              name: menuItem.name,
-              price: price,
-              quantity: 1
-            });
-          }
-        }
-      });
-
-      if (itemsToAdd.length > 0) {
-        setSelectedItems(itemsToAdd);
-        toast.success('Menu Items Added', {
-          description: `${itemsToAdd.length} item(s) have been added to your pre-order.`,
-        });
-      }
-    } else if (itemId && selectedItems.length === 0 && menuItems.length > 0) {
-      const menuItem = menuItems.find(item => item.id === itemId);
-      if (menuItem) {
-        const price = parsePrice(menuItem.price);
-        setSelectedItems([{
-          id: menuItem.id,
-          name: menuItem.name,
-          price: price,
-          quantity: 1
-        }]);
-        toast.success('Menu Item Added', {
-          description: `${menuItem.name} has been added to your pre-order.`,
-        });
-      }
-    }
-  }, [searchParams, menuItems]);
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -164,39 +152,6 @@ export default function Reservation() {
       item.name.toLowerCase().includes(menuSearchQuery.toLowerCase())
     );
   }, [menuItems, menuSearchQuery]);
-
-  const addItem = (item: MenuItem) => {
-    const existingItem = selectedItems.find(i => i.id === item.id);
-    const price = parsePrice(item.price);
-
-    if (existingItem) {
-      setSelectedItems(selectedItems.map(i =>
-        i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
-      ));
-    } else {
-      setSelectedItems([...selectedItems, {
-        id: item.id,
-        name: item.name,
-        price: price,
-        quantity: 1
-      }]);
-    }
-    toast.success(`${item.name} added to order`);
-  };
-
-  const removeItem = (id: string) => {
-    setSelectedItems(selectedItems.filter(item => item.id !== id));
-  };
-
-  const updateQuantity = (id: string, quantity: number) => {
-    if (quantity < 1) {
-      removeItem(id);
-      return;
-    }
-    setSelectedItems(selectedItems.map(item =>
-      item.id === id ? { ...item, quantity } : item
-    ));
-  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (selectedItems.length === 0) {
@@ -320,20 +275,19 @@ export default function Reservation() {
                   <h3 className="text-lg font-medium text-card-foreground mb-4">Reservation Details</h3>
 
                   <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                      {/* Full Grid Layout */}
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* Left Column - Personal Info */}
-                        <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                      {/* Stacked Layout for Form Fields */}
+                      <div className="space-y-6 ">
+                        {/* Personal Info - Full Width Stack */}
+                        <div className="space-y-4 ">
                           <FormField
                             control={form.control}
                             name="full_name"
                             render={({ field }) => (
-                              <FormItem>
+                              <FormItem className="w-full">
                                 <FormLabel className="text-sm font-medium">Full Name</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="John Doe" {...field} className="py-2.5 text-sm rounded-lg border-border focus:border-primary" />
+                                  <Input placeholder="John Doe" {...field} className="py-2.5 text-sm rounded-lg border-border focus:border-primary w-full" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -354,10 +308,10 @@ export default function Reservation() {
                               };
 
                               return (
-                                <FormItem>
+                                <FormItem className="w-full">
                                   <FormLabel className="text-sm font-medium">Phone Number</FormLabel>
                                   <FormControl>
-                                    <div className="relative">
+                                    <div className="relative w-full">
                                       <div className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground pointer-events-none">
                                         +92
                                       </div>
@@ -365,7 +319,7 @@ export default function Reservation() {
                                         placeholder="3XX XXXXXXX"
                                         value={field.value}
                                         onChange={handlePhoneChange}
-                                        className="pl-12 py-2.5 text-sm rounded-lg border-border focus:border-primary"
+                                        className="pl-12 py-2.5 text-sm rounded-lg border-border focus:border-primary w-full"
                                       />
                                     </div>
                                   </FormControl>
@@ -374,17 +328,15 @@ export default function Reservation() {
                               );
                             }}
                           />
-                        </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <FormField
                             control={form.control}
                             name="reservation_date"
                             render={({ field }) => (
-                              <FormItem>
+                              <FormItem className="w-full">
                                 <FormLabel className="text-sm font-medium">Date</FormLabel>
                                 <FormControl>
-                                  <Input type="date" {...field} className="py-2.5 text-sm rounded-lg border-border focus:border-primary" />
+                                  <Input type="date" {...field} className="py-2.5 text-sm rounded-lg border-border focus:border-primary w-full" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -395,10 +347,24 @@ export default function Reservation() {
                             control={form.control}
                             name="reservation_time"
                             render={({ field }) => (
-                              <FormItem>
+                              <FormItem className="w-full">
                                 <FormLabel className="text-sm font-medium">Time</FormLabel>
                                 <FormControl>
-                                  <Input type="time" {...field} className="py-2.5 text-sm rounded-lg border-border focus:border-primary" />
+                                  <Input type="time" {...field} className="py-2.5 text-sm rounded-lg border-border focus:border-primary w-full" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="guests_count"
+                            render={({ field }) => (
+                              <FormItem className="w-full">
+                                <FormLabel className="text-sm font-medium">Number of Guests</FormLabel>
+                                <FormControl>
+                                  <Input type="number" min="1" {...field} className="py-2.5 text-sm rounded-lg border-border focus:border-primary w-full" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -406,24 +372,9 @@ export default function Reservation() {
                           />
                         </div>
 
-                        <FormField
-                          control={form.control}
-                          name="guests_count"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-sm font-medium">Number of Guests</FormLabel>
-                              <FormControl>
-                                <Input type="number" min="1" {...field} className="py-2.5 text-sm rounded-lg border-border focus:border-primary" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      {/* Right Column - Order */}
-                      <div className="space-y-4">
-                        <div className="space-y-3">
+                        {/* Order Section - Full Width Search */}
+                        <div className="space-y-4 pt-4 border-t border-border">
+                          <div className="space-y-3">
                             <label className="text-sm font-medium">Pre-Order Food Items <span className="text-destructive">*</span></label>
                             <p className="text-xs text-muted-foreground">At least one food item must be selected to proceed.</p>
 
@@ -438,85 +389,119 @@ export default function Reservation() {
                               </div>
                             ) : (
                               <div className="space-y-2">
-                                <Input
-                                  type="text"
-                                  placeholder="Search menu items..."
-                                  value={menuSearchQuery}
-                                  onChange={(e) => setMenuSearchQuery(e.target.value)}
-                                  className="py-2.5 text-sm rounded-lg border-border focus:border-primary w-full"
-                                />
-                                <div className="max-h-60 overflow-y-auto border border-border rounded-lg bg-card w-full">
-                                  {filteredMenuItems.length === 0 ? (
-                                    <div className="p-4 text-center text-muted-foreground text-sm">No menu items found</div>
-                                  ) : (
-                                    filteredMenuItems.map((item) => (
-                                      <button
-                                        key={item.id}
-                                        type="button"
-                                        onClick={() => {
-                                          addItem(item);
-                                          setMenuSearchQuery('');
-                                        }}
-                                        className="w-full text-left p-3 hover:bg-muted transition-colors text-sm"
-                                      >
-                                        <div className="flex justify-between items-center">
-                                          <span>{item.name}</span>
-                                          <span className="text-muted-foreground">{item.price}</span>
-                                        </div>
-                                      </button>
-                                    ))
-                                  )}
-                                </div>
+                                <Popover open={open} onOpenChange={setOpen}>
+                                  <PopoverTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      role="combobox"
+                                      aria-expanded={open}
+                                      className="w-full justify-between py-6 text-sm rounded-lg border-border hover:bg-muted transition-colors !bg-white"
+                                    >
+                                      <div className="flex items-center gap-2 text-muted-foreground">
+                                        <Search className="h-4 w-4" />
+                                        <span>Search menu items...</span>
+                                      </div>
+                                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 !bg-white" align="start">
+                                    <Command>
+                                      <CommandInput placeholder="Search menu items..." />
+                                      <CommandList>
+                                        <CommandEmpty>No menu items found.</CommandEmpty>
+                                        <CommandGroup>
+                                          {menuItems.map((item) => (
+                                            <CommandItem
+                                              key={item.id}
+                                              value={item.name}
+                                              onSelect={() => {
+                                                addItem(item);
+                                                setOpen(false);
+                                              }}
+                                              className={cn("flex justify-between items-center p-3 cursor-pointer data-[selected=true]:bg-muted/70 transition-colors")}
+                                            >
+                                              <div className="flex items-center gap-2">
+                                                <div className="h-2 w-2 rounded-full bg-primary/40" />
+                                                <span className="font-medium">{item.name}</span>
+                                              </div>
+                                              <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md">
+                                                {item.price}
+                                              </span>
+                                            </CommandItem>
+                                          ))}
+                                        </CommandGroup>
+                                      </CommandList>
+                                    </Command>
+                                  </PopoverContent>
+                                </Popover>
                               </div>
                             )}
                           </div>
 
                           {selectedItems.length > 0 && (
-                            <div className="space-y-3 p-4 bg-muted/30 rounded-lg border border-border">
-                              <h4 className="text-xs font-semibold uppercase text-muted-foreground">Your Order</h4>
-                              {selectedItems.map((item) => (
-                                <div key={item.id} className="flex items-center justify-between gap-3 p-2 bg-card rounded-md">
-                                  <div className="flex-1">
-                                    <p className="text-sm font-medium">{item.name}</p>
-                                    <p className="text-xs text-muted-foreground">PKR {item.price} each</p>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                      className="h-7 w-7 p-0 rounded-md"
-                                    >
-                                      <Minus className="h-3 w-3" />
-                                    </Button>
-                                    <span className="w-7 text-center text-sm font-medium">{item.quantity}</span>
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                      className="h-7 w-7 p-0 rounded-md"
-                                    >
-                                      <Plus className="h-3 w-3" />
-                                    </Button>
+                            <div className="space-y-6 p-6 bg-primary/[0.03] rounded-2xl border border-primary/10 shadow-sm">
+                              <div className="flex items-center justify-between border-b border-primary/10 pb-4">
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-primary">Your Selection</h4>
+                                <Badge variant="secondary" className="text-xs px-3 h-6 rounded-full">
+                                  {selectedItems.length} {selectedItems.length === 1 ? 'Item' : 'Items'}
+                                </Badge>
+                              </div>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {selectedItems.map((item) => (
+                                  <div key={item.id} className="flex items-center justify-between gap-4 p-4 bg-card rounded-xl border border-border shadow-sm group hover:border-primary/30 transition-all duration-300">
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-bold text-foreground truncate mb-0.5">{item.name}</p>
+                                      <p className="text-xs text-primary font-semibold">PKR {item.price.toLocaleString()}</p>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-2 bg-muted/30 rounded-lg p-1 border border-border/50">
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                        className="h-8 w-8 p-0 hover:bg-background rounded-md transition-colors"
+                                      >
+                                        <Minus className="h-3 w-3" />
+                                      </Button>
+                                      <span className="text-xs font-bold min-w-[1.5rem] text-center">
+                                        {item.quantity}
+                                      </span>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                        className="h-8 w-8 p-0 hover:bg-background rounded-md transition-colors"
+                                      >
+                                        <Plus className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+
                                     <Button
                                       type="button"
                                       variant="ghost"
                                       size="sm"
                                       onClick={() => removeItem(item.id)}
-                                      className="h-7 w-7 p-0 rounded-md text-destructive hover:text-destructive"
+                                      className="h-9 w-9 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition-all"
                                     >
                                       <X className="h-4 w-4" />
                                     </Button>
                                   </div>
+                                ))}
+                              </div>
+
+                              <div className="flex justify-between items-center pt-5 border-t border-primary/10">
+                                <div className="space-y-0.5">
+                                  <span className="text-sm font-bold text-foreground">Total Bill</span>
+                                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Inclusive of all applicable taxes</p>
                                 </div>
-                              ))}
-                              <div className="flex justify-between items-center pt-3 border-t border-border">
-                                <span className="text-sm font-medium">Total Bill:</span>
-                                <Badge variant="outline" className="text-sm px-4 py-1 bg-primary/10 text-primary border-none">
-                                  PKR {totalPrice}
-                                </Badge>
+                                <div className="text-right">
+                                  <span className="text-2xl font-black text-primary tracking-tight">
+                                    PKR {totalPrice.toLocaleString()}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           )}
@@ -685,7 +670,7 @@ export default function Reservation() {
           setShowSuccessDialog(open);
           if (!open) {
             form.reset();
-            setSelectedItems([]);
+            contextClearReservation();
             setPaymentMethod(null);
           }
         }}>

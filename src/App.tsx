@@ -9,6 +9,8 @@ import BaseLayout from '@/components/layout/BaseLayout';
 import routes from './routes';
 import adminRoutes from './adminRoutes';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { ReservationProvider } from '@/contexts/ReservationContext';
+import ReservationPopup from '@/components/common/ReservationPopup';
 
 const App: React.FC = () => {
   const isAdminDomain = window.location.hostname.includes('admin');
@@ -18,10 +20,11 @@ const App: React.FC = () => {
     <HelmetProvider>
       <Router>
         <AuthProvider>
-          <LoadingScreen />
-          <ScrollToTop />
-          <IntersectObserver />
-          {isAdminDomain ? (
+          <ReservationProvider>
+            <LoadingScreen />
+            <ScrollToTop />
+            <IntersectObserver />
+            {isAdminDomain ? (
             <Suspense fallback={<div className="flex h-screen w-full items-center justify-center bg-background text-foreground">Loading...</div>}>
               <Routes>
                 {adminRoutes.map((route, index) => (
@@ -51,6 +54,8 @@ const App: React.FC = () => {
             </BaseLayout>
           )}
           <Toaster />
+          <ReservationPopup />
+          </ReservationProvider>
         </AuthProvider>
       </Router>
     </HelmetProvider>
