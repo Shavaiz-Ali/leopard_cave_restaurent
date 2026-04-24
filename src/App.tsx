@@ -1,7 +1,6 @@
 import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
-import IntersectObserver from '@/components/common/IntersectObserver';
 import ScrollToTop from '@/components/common/ScrollToTop';
 import LoadingScreen from '@/components/common/LoadingScreen';
 import { Toaster } from '@/components/ui/sonner';
@@ -11,6 +10,7 @@ import adminRoutes from './adminRoutes';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ReservationProvider } from '@/contexts/ReservationContext';
 import ReservationPopup from '@/components/common/ReservationPopup';
+import IntersectObserver from './components/common/IntersectObserver';
 
 const App: React.FC = () => {
   const isAdminDomain = window.location.hostname.includes('admin');
