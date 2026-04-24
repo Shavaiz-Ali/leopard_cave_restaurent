@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Utensils, Search, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/utils/supabase';
+import { useReservation } from '@/contexts/ReservationContext';
 
 interface MenuItem {
   id: string;
@@ -23,6 +24,7 @@ interface Category {
 
 export default function MenuCards() {
   const navigate = useNavigate();
+  const { addItem, selectedItems } = useReservation();
   const [searchQuery, setSearchQuery] = useState('');
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -160,7 +162,7 @@ export default function MenuCards() {
                             <span className="text-sm font-semibold text-primary">{item.price}</span>
                             <Button
                               size="sm"
-                              onClick={() => navigate(`/reservation?items=${item.id}`)}
+                              onClick={() => addItem(item as any)}
                               className="px-4 py-1.5 rounded-lg text-xs"
                             >
                               Reserve

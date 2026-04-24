@@ -1,19 +1,20 @@
-import Home from '@/pages/Home';
-import MenuLanding from '@/pages/MenuLanding';
-import MenuImages from '@/pages/MenuImages';
-import MenuCards from '@/pages/MenuCards';
-import Gallery from '@/pages/Gallery';
-import Videos from '@/pages/Videos';
-import Reservation from '@/pages/Reservation';
-import ReservationStatus from '@/pages/ReservationStatus';
-import NearbyPlaces from '@/pages/NearbyPlaces';
-import Location from '@/pages/Location';
-import AboutUs from '@/pages/AboutUs';
-import Blogs from '@/pages/Blogs';
-import SocialMedia from '@/pages/SocialMedia';
-import LeopardCaveResort from '@/pages/LeopardCaveResort';
-import CampaignReservation from '@/pages/CampaignReservation';
-import type { ReactNode } from 'react';
+import { lazy, type ReactNode } from 'react';
+
+const Home = lazy(() => import('@/pages/Home'));
+const MenuLanding = lazy(() => import('@/pages/MenuLanding'));
+const MenuImages = lazy(() => import('@/pages/MenuImages'));
+const MenuCards = lazy(() => import('@/pages/MenuCards'));
+const Gallery = lazy(() => import('@/pages/Gallery'));
+const Videos = lazy(() => import('@/pages/Videos'));
+const Reservation = lazy(() => import('@/pages/Reservation'));
+const ReservationStatus = lazy(() => import('@/pages/ReservationStatus'));
+const NearbyPlaces = lazy(() => import('@/pages/NearbyPlaces'));
+const Location = lazy(() => import('@/pages/Location'));
+const AboutUs = lazy(() => import('@/pages/AboutUs'));
+const Blogs = lazy(() => import('@/pages/Blogs'));
+const SocialMedia = lazy(() => import('@/pages/SocialMedia'));
+const LeopardCaveResort = lazy(() => import('@/pages/LeopardCaveResort'));
+const CampaignReservation = lazy(() => import('@/pages/CampaignReservation'));
 
 interface RouteConfig {
   name: string;

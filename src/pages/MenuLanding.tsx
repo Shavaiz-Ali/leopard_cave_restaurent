@@ -6,6 +6,7 @@ import { Utensils, Image, List, Search, Loader2 } from 'lucide-react';
 import SEO from '@/components/common/SEO';
 import { supabase } from '@/utils/supabase';
 import { useNavigate } from 'react-router-dom';
+import { useReservation } from '@/contexts/ReservationContext';
 
 interface MenuImage {
   id: string;
@@ -30,6 +31,7 @@ interface Category {
 
 export default function MenuLanding() {
   const navigate = useNavigate();
+  const { addItem, selectedItems } = useReservation();
   const [activeTab, setActiveTab] = useState<'cards' | 'images'>('cards');
   const [searchQuery, setSearchQuery] = useState('');
   const [menuImages, setMenuImages] = useState<MenuImage[]>([]);
@@ -206,15 +208,15 @@ export default function MenuLanding() {
                                 <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 mb-2">{item.description}</p>
                               </div>
                               <div className="flex items-center justify-between">
-                                <span className="text-sm font-semibold text-primary">{item.price}</span>
-                                <Button
-                                  size="sm"
-                                  onClick={() => navigate(`/reservation?items=${item.id}`)}
-                                  className="px-4 py-1.5 rounded-lg text-xs"
-                                >
-                                  Reserve
-                                </Button>
-                              </div>
+                                  <span className="text-sm font-semibold text-primary">{item.price}</span>
+                                  <Button
+                                     size="sm"
+                                     onClick={() => addItem(item as any)}
+                                     className="px-4 py-1.5 rounded-lg text-xs"
+                                   >
+                                     Reserve
+                                   </Button>
+                                </div>
                             </div>
                           </div>
                         ))}
