@@ -3,6 +3,12 @@
 
 User-agent: *
 Allow: /
+Disallow: /login
+Disallow: /dashboard
+Disallow: /reservations
+Disallow: /settings
+Disallow: /categories
+Disallow: /api/
 
 # Sitemap location
 Sitemap: https://leopardcaverestaurant.com/sitemap.xml
